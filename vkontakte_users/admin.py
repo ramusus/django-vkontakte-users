@@ -13,7 +13,7 @@ class UserAdmin(VkontakteModelAdmin):
     list_display = ('image_preview','first_name','last_name','vk_link','rate','sex','bdate','timezone','city','country','has_mobile','home_phone','mobile_phone',)
     list_display_links = ('first_name','last_name')
     list_filter = ('sex','has_mobile','timezone',)
-    search_fields = ('first_name','last_name')
+    search_fields = ('first_name','last_name','screen_name')
 
     def get_readonly_fields(self, request, obj=None):
         fields = super(UserAdmin, self).get_readonly_fields(request, obj)
