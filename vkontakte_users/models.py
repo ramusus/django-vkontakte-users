@@ -220,11 +220,12 @@ class User(VkontakteIDModel):
 
     def save(self, *args, **kwargs):
         # check strings for good encoding
-        # there is problems to save users with bad encoded activity strings like ID=88798245
-        try:
-            self.activity.encode('utf-16').decode('utf-16')
-        except UnicodeDecodeError:
-            self.activity = ''
+        # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
+        for field in ['activity','games','movies','tv','books','about','interests']:
+            try:
+                getattr(self, field).encode('utf-16').decode('utf-16')
+            except UnicodeDecodeError:
+                setattr(self, field, '')
 
         return super(User, self).save(*args, **kwargs)
 
