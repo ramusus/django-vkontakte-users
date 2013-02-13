@@ -293,7 +293,7 @@ class User(VkontakteIDModel):
     def fetch_posts(self, *args, **kwargs):
         if 'vkontakte_wall' in settings.INSTALLED_APPS:
             from vkontakte_wall.models import Post
-            return Post.remote.fetch_user_wall(self, *args, **kwargs)
+            return Post.remote.fetch_user_wall(user=self, *args, **kwargs)
         else:
             raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
 
@@ -317,6 +317,8 @@ class User(VkontakteIDModel):
 
         self.friends_count = self.friends_users.count()
         self.save()
+
+        return self.friends_users.all()
 
     @property
     def is_deactivated(self):
