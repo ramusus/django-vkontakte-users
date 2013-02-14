@@ -329,3 +329,11 @@ class User(VkontakteIDModel):
 
     def get_sex(self):
         return dict(USER_SEX_CHOICES).get(self.sex)
+
+    @property
+    def wall_comments(self):
+        if 'vkontakte_wall' in settings.INSTALLED_APPS:
+            from vkontakte_wall.models import Comment
+            return Comment.objects.filter(remote_id__startswith='%s_' % self.remote_id)
+        else:
+            raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
