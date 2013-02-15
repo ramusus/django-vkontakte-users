@@ -74,8 +74,9 @@ class UsersRemoteManager(VkontakteManager):
         try:
             return super(UsersRemoteManager, self).get_by_slug(slug)
         except self.model.MultipleObjectsReturned:
+            # fetch again all users with this slug and return only active one
             self.model.remote.fetch(ids=[u.remote_id for u in self.model.objects.filter(screen_name=slug)])
-            return self.objects.active().get(screen_name=slug)
+            return self.model.objects.active().get(screen_name=slug)
 
 #    def get_or_create_from_instance(self, instance):
 #        #DatabaseError: invalid byte sequence for encoding "UTF8": 0xeda0bc
@@ -330,10 +331,11 @@ class User(VkontakteIDModel):
     def get_sex(self):
         return dict(USER_SEX_CHOICES).get(self.sex)
 
-    @property
-    def wall_comments(self):
-        if 'vkontakte_wall' in settings.INSTALLED_APPS:
-            from vkontakte_wall.models import Comment
-            return Comment.objects.filter(remote_id__startswith='%s_' % self.remote_id)
-        else:
-            raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
+#    TODO: Solve naming, dublicate with boolean wall_comments
+#    @property
+#    def wall_comments(self):
+#        if 'vkontakte_wall' in settings.INSTALLED_APPS:
+#            from vkontakte_wall.models import Comment
+#            return Comment.objects.filter(remote_id__startswith='%s_' % self.remote_id)
+#        else:
+#            raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")

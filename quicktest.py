@@ -46,10 +46,13 @@ class QuickDjangoTest(object):
         """
         Fire up the Django test suite from before version 1.2
         """
+        INSTALLED_APPS, settings_test = self.custom_settings()
+
         settings.configure(DEBUG = True,
-           DATABASE_ENGINE = 'sqlite3',
-           DATABASE_NAME = os.path.join(self.DIRNAME, 'database.db'),
-           INSTALLED_APPS = self.INSTALLED_APPS + self.apps
+            DATABASE_ENGINE = 'sqlite3',
+            DATABASE_NAME = os.path.join(self.DIRNAME, 'database.db'),
+            INSTALLED_APPS = self.INSTALLED_APPS + INSTALLED_APPS + self.apps,
+            **settings_test
         )
         from django.test.simple import run_tests
         failures = run_tests(self.apps, verbosity=1)
@@ -60,6 +63,8 @@ class QuickDjangoTest(object):
         """
         Fire up the Django test suite developed for version 1.2
         """
+        INSTALLED_APPS, settings_test = self.custom_settings()
+
         settings.configure(
             DEBUG = True,
             DATABASES = {
@@ -72,12 +77,27 @@ class QuickDjangoTest(object):
                     'PORT': '',
                 }
             },
-            INSTALLED_APPS = self.INSTALLED_APPS + self.apps
+            INSTALLED_APPS = self.INSTALLED_APPS + INSTALLED_APPS + self.apps,
+            **settings_test
         )
+
         from django.test.simple import DjangoTestSuiteRunner
         failures = DjangoTestSuiteRunner().run_tests(self.apps, verbosity=1)
         if failures:
             sys.exit(failures)
+
+    def custom_settings(self):
+        try:
+            from settings_test import *
+            settings_test = dict(locals())
+            del settings_test['self']
+            if 'INSTALLED_APPS' in settings_test:
+                del settings_test['INSTALLED_APPS']
+        except ImportError:
+            settings_test = {}
+            INSTALLED_APPS = []
+
+        return INSTALLED_APPS, settings_test
 
 if __name__ == '__main__':
     """

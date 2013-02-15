@@ -6,16 +6,16 @@ import simplejson as json
 
 class VkontakteUsersTest(TestCase):
 
-    def test_fetch_user_relatives(self):
-
-        users = User.remote.fetch(ids=[1,6])
-
-        self.assertEqual(users[0].relatives.count(), 0)
-
-        users = User.remote.fetch(ids=[1,6])
-
-        self.assertEqual(users[0].relatives.count(), 1) # fix it, design decision needed
-        self.assertEqual(users[0].relatives.all()[0], users[1])
+#    def test_fetch_user_relatives(self):
+#
+#        users = User.remote.fetch(ids=[1,6])
+#
+#        self.assertEqual(users[0].relatives.count(), 0)
+#
+#        users = User.remote.fetch(ids=[1,6])
+#
+#        self.assertEqual(users[0].relatives.count(), 1) # fix it, design decision needed
+#        self.assertEqual(users[0].relatives.all()[0], users[1])
 
     def test_fetch_user_friends(self):
 
@@ -38,7 +38,6 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(users[0].last_name, u'Дуров')
         self.assertEqual(users[0].twitter, u'durov')
         self.assertEqual(users[0].livejournal, u'durov')
-        self.assertTrue(len(users[0].activity) > 0)
         self.assertEqual(users[0].relation, 1)
         self.assertEqual(users[0].wall_comments, False)
 
