@@ -1,6 +1,6 @@
 # Django Vkontakte Users
 
-<a href="https://travis-ci.org/#!/ramusus/django-vkontakte-users" title="Django Vkontakte Users Travis Status"><img src="https://secure.travis-ci.org/ramusus/django-vkontakte-users.png?branch=master"></a>
+<a href="https://travis-ci.org/#!/ramusus/django-vkontakte-users" title="Django Vkontakte Users Travis Status"><img src="https://secure.travis-ci.org/ramusus/django-vkontakte-users.png"></a>
 
 Приложение позволяет взаимодействовать с профилями пользователей Вконтакте через Вконтакте API используя стандартные модели Django
 
