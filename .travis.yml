@@ -1,0 +1,14 @@
+language: python
+python:
+  - "2.7"
+env:
+  - DJANGO=1.4.0
+install:
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -q . --use-mirrors
+notifications:
+  email:
+    recipients:
+      - ramusus@gmail.com
+    on_success: change
+    on_failure: change
