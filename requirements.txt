@@ -1,4 +1,5 @@
 simplejson
 factory_boy
+python-dateutil==1.5
 django-vkontakte-api>=0.3.4
 django-vkontakte-places>=0.3.0
