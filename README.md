@@ -30,8 +30,63 @@
 ### Получение пользователя по адресу страницы
 
     >>> from vkontakte_users.models import User
-    >>> User.remote.get_by_slug('durov')
+    >>> user = User.remote.get_by_slug('durov')
+    >>> user
     <User: Павел Дуров>
+    >>> user.__dict__
+    {'_state': <django.db.models.base.ModelState at 0xb2eba8c>,
+     'about': u'Steve Dogs',
+     'activity': u'',
+     'albums': 3,
+     'audios': 111,
+     'bdate': u'10.10.1984',
+     'books': u'',
+     'city_id': 380,
+     'counters_updated': datetime.datetime(2012, 3, 14, 0, 13, 14, 819693),
+     'country_id': 160,
+     'facebook': u'',
+     'facebook_name': u'',
+     'faculty': 15,
+     'faculty_name': u'Филологический',
+     'fetched': datetime.datetime(2013, 2, 14, 15, 13, 46, 673793),
+     'first_name': u'Павел',
+     'followers': 3437985,
+     'friends': 524,
+     'friends_count': 0,
+     'games': u'',
+     'graduation': 2006,
+     'has_mobile': True,
+     'home_phone': u'',
+     'id': 2765,
+     'interests': u'',
+     'last_name': u'Дуров',
+     'livejournal': u'durov',
+     'mobile_phone': u'',
+     'movies': u"Flying Over Cuckoo's Nest, Rainman, Fight Club, Matrix, Equilibrium, Watchmen",
+     'mutual_friends': 0,
+     'notes': 6,
+     'photo': u'http://cs7003.userapi.com/v7003815/22a1/xgG9fb-IJ3Y.jpg',
+     'photo_big': u'http://cs7003.userapi.com/v7003685/1ddd/jZ8LZcwYN20.jpg',
+     'photo_medium': u'http://cs7003.userapi.com/v7003793/2184/qgHVkPyWj6A.jpg',
+     'photo_medium_rec': u'',
+     'photo_rec': u'',
+     'rate': None,
+     'relation': 1,
+     'remote_id': 1L,
+     'screen_name': u'durov',
+     'sex': 2,
+     'skype': u'',
+     'subscriptions': 1,
+     'sum_counters': 3438644,
+     'timezone': 3,
+     'tv': u'',
+     'twitter': u'durov',
+     'university': 1,
+     'university_name': u'СПбГУ',
+     'user_photos': 4,
+     'user_videos': 1,
+     'videos': 9,
+     'wall_comments': False}
 
 ### Получение друзей пользователя
 
