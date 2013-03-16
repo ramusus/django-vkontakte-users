@@ -2,7 +2,6 @@
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
-from django.utils.translation import ugettext as _
 from datetime import datetime
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
@@ -129,9 +128,8 @@ class User(VkontakteIDModel):
     TODO: implement relatives, schools and universities connections
     '''
     class Meta:
-        db_table = 'vkontakte_users_user'
-        verbose_name = _('Vkontakte user')
-        verbose_name_plural = _('Vkontakte users')
+        verbose_name = u'Пользователь Вконтакте'
+        verbose_name_plural = u'Пользователи Вконтакте'
         ordering = ['remote_id']
 
     remote_pk_field = 'uid'
@@ -292,11 +290,11 @@ class User(VkontakteIDModel):
         return self.first_name + ' ' + self.last_name
 
     def fetch_posts(self, *args, **kwargs):
-        if 'vkontakte_wall' in settings.INSTALLED_APPS:
-            from vkontakte_wall.models import Post
-            return Post.remote.fetch_user_wall(user=self, *args, **kwargs)
-        else:
+        if 'vkontakte_wall' not in settings.INSTALLED_APPS:
             raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
+
+        from vkontakte_wall.models import Post
+        return Post.remote.fetch_user_wall(user=self, *args, **kwargs)
 
     def fetch_friends(self):
         if self.is_deactivated:
@@ -334,8 +332,7 @@ class User(VkontakteIDModel):
 #    TODO: Solve naming, dublicate with boolean wall_comments
 #    @property
 #    def wall_comments(self):
-#        if 'vkontakte_wall' in settings.INSTALLED_APPS:
-#            from vkontakte_wall.models import Comment
-#            return Comment.objects.filter(remote_id__startswith='%s_' % self.remote_id)
-#        else:
+#        if 'vkontakte_wall' not in settings.INSTALLED_APPS:
 #            raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
+#        from vkontakte_wall.models import Comment
+#        return Comment.objects.filter(remote_id__startswith='%s_' % self.remote_id)
