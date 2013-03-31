@@ -46,6 +46,7 @@ class UsersManager(models.Manager):
 class UsersRemoteManager(VkontakteManager):
 
     def fetch(self, **kwargs):
+        # TODO: remove here restriction to fetch no more then 1000 users per time
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
             ids_actual = list(self.model.objects.filter(fetched__gte=datetime.now()-timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS), remote_id__in=ids).values_list('remote_id', flat=True))
@@ -288,6 +289,12 @@ class User(VkontakteIDModel):
 
     def __unicode__(self):
         return self.first_name + ' ' + self.last_name
+
+    def set_name(self, name):
+        name_parts = name.split()
+        self.first_name = name_parts[0]
+        if len(name_parts) > 1:
+            self.last_name = ' '.join(name_parts[1:])
 
     def fetch_posts(self, *args, **kwargs):
         if 'vkontakte_wall' not in settings.INSTALLED_APPS:
