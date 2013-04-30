@@ -27,6 +27,11 @@
     OAUTH_TOKENS_VKONTAKTE_PASSWORD = ''                                # user password
     OAUTH_TOKENS_VKONTAKTE_PHONE_END = ''                               # last 4 digits of user mobile phone
 
+## Покрытие методов API
+
+* [users.get](http://vk.com/developers.php?oid=-1&p=users.get) - возвращает расширенную информацию о пользователях;
+* [friends.get](http://vk.com/developers.php?oid=-1&p=friends.get) – возвращает список id друзей пользователя;
+
 ## Примеры использования
 
 ### Получение пользователей по ID
