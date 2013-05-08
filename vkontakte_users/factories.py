@@ -2,7 +2,7 @@ from models import User
 import factory
 import random
 
-class UserFactory(factory.Factory):
+class UserFactory(factory.DjangoModelFactory):
     FACTORY_FOR = User
 
     remote_id = factory.Sequence(lambda n: n)
