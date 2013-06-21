@@ -26,22 +26,22 @@ USER_RELATION_CHOICES = (
     (7, u'Влюблён / влюблена'),
 )
 
-USER_PHOTO_DEACTIVATED_URL = 'http://vk.com/images/deactivated_b.gif'
-USER_NO_PHOTO_URL = 'http://vkontakte.ru/images/camera_a.gif'
+USER_PHOTO_DEACTIVATED_URL = 'http://vk.com/images/deactivated_'
+USER_NO_PHOTO_URL = 'http://vkontakte.ru/images/camera_'
 
 class UsersManager(models.Manager):
 
     def deactivated(self):
-        return self.filter(photo_big=USER_PHOTO_DEACTIVATED_URL)
+        return self.filter(photo_big__startswith=USER_PHOTO_DEACTIVATED_URL)
 
     def active(self):
-        return self.exclude(photo_big=USER_PHOTO_DEACTIVATED_URL)
+        return self.exclude(photo_big__startswith=USER_PHOTO_DEACTIVATED_URL)
 
     def has_avatars(self):
         return self.filter(photo_big__contains='userapi.com')
 
     def no_avatars(self):
-        return self.filter(photo_big=USER_NO_PHOTO_URL)
+        return self.filter(photo_big__startswith=USER_NO_PHOTO_URL)
 
 class UsersRemoteManager(VkontakteManager):
 
@@ -161,6 +161,7 @@ class User(VkontakteIDModel):
     home_phone = models.CharField(max_length=50)
     mobile_phone = models.CharField(max_length=50)
 
+    photo_fields = 'photo,photo_big,photo_medium,photo_medium_rec,photo_rec'
     photo = models.URLField()
     photo_big = models.URLField()
     photo_medium = models.URLField()
@@ -328,10 +329,17 @@ class User(VkontakteIDModel):
 
     @property
     def is_deactivated(self):
-        return self.photo_big == USER_PHOTO_DEACTIVATED_URL
+        for field_name in self.photo_fields.split(','):
+            if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
+                return True
+        return False
+
     @property
     def has_avatar(self):
-        return self.photo_big != USER_NO_PHOTO_URL
+        for field_name in self.photo_fields.split(','):
+            if USER_NO_PHOTO_URL in getattr(self, field_name):
+                return False
+        return True
 
     def get_sex(self):
         return dict(USER_SEX_CHOICES).get(self.sex)
