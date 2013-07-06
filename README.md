@@ -1,10 +1,10 @@
-# Django Vkontakte Users
-
-[![Build Status](https://travis-ci.org/ramusus/django-vkontakte-users.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-users) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-users/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-users)
+Django Vkontakte Users [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-users.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-users) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-users/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-users)
+======================
 
 Приложение позволяет взаимодействовать с профилями пользователей Вконтакте через Вконтакте API используя стандартные модели Django
 
-## Установка
+Установка
+---------
 
     pip install django-vkontakte-users
 
@@ -27,12 +27,14 @@
     OAUTH_TOKENS_VKONTAKTE_PASSWORD = ''                                # user password
     OAUTH_TOKENS_VKONTAKTE_PHONE_END = ''                               # last 4 digits of user mobile phone
 
-## Покрытие методов API
+Покрытие методов API
+--------------------
 
 * [users.get](http://vk.com/developers.php?oid=-1&p=users.get) - возвращает расширенную информацию о пользователях;
 * [friends.get](http://vk.com/developers.php?oid=-1&p=friends.get) – возвращает список id друзей пользователя;
 
-## Примеры использования
+Примеры использования
+---------------------
 
 ### Получение пользователей по ID
 

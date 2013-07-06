@@ -29,6 +29,17 @@ USER_RELATION_CHOICES = (
 USER_PHOTO_DEACTIVATED_URL = 'http://vk.com/images/deactivated_'
 USER_NO_PHOTO_URL = 'http://vkontakte.ru/images/camera_'
 
+class ParseUsersMixin(object):
+    '''
+    Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
+    '''
+    def parse_response_users(self, response_list):
+        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': datetime.now()})
+        instances = []
+        for instance in users:
+            instances += [User.remote.get_or_create_from_instance(instance)]
+        return instances
+
 class UsersManager(models.Manager):
 
     def deactivated(self):
@@ -302,7 +313,7 @@ class User(VkontakteIDModel):
             raise ImproperlyConfigured("Application 'vkontakte_wall' not in INSTALLED_APPS")
 
         from vkontakte_wall.models import Post
-        return Post.remote.fetch_user_wall(user=self, *args, **kwargs)
+        return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
     def fetch_friends(self):
         if self.is_deactivated:
