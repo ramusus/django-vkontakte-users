@@ -239,6 +239,9 @@ class User(VkontakteIDModel):
             except UnicodeDecodeError:
                 setattr(self, field, '')
 
+        if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
+            self.relation = None
+
         return super(User, self).save(*args, **kwargs)
 
     def _substitute(self, old_instance):
