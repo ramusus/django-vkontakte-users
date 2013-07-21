@@ -253,6 +253,7 @@ class User(VkontakteIDModel):
 
         self.sum_counters = old_instance.sum_counters
         self.counters_updated = old_instance.counters_updated
+        self.friends_count = old_instance.friends_count
         super(User, self)._substitute(old_instance)
 
     def parse(self, response):
