@@ -233,7 +233,7 @@ class User(VkontakteIDModel):
     def save(self, *args, **kwargs):
         # check strings for good encoding
         # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
-        for field in ['activity','games','movies','tv','books','about','interests']:
+        for field in ['activity','games','movies','tv','books','about','interests','mobile_phone','home_phone','faculty_name','university_name']:
             try:
                 getattr(self, field).encode('utf-16').decode('utf-16')
             except UnicodeDecodeError:
@@ -242,7 +242,11 @@ class User(VkontakteIDModel):
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
             self.relation = None
 
-        return super(User, self).save(*args, **kwargs)
+        try:
+            return super(User, self).save(*args, **kwargs)
+        except Exception, e:
+            log.error("Error while saving user ID=%s with fields %s" % (self.remote_id, self.__dict__))
+            raise e
 
     def _substitute(self, old_instance):
         '''
