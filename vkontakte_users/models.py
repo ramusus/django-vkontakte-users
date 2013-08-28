@@ -89,6 +89,12 @@ class UsersRemoteManager(VkontakteManager):
             self.model.remote.fetch(ids=[u.remote_id for u in self.model.objects.filter(screen_name=slug)])
             return self.model.objects.active().get(screen_name=slug)
 
+    def parse_response_list(self, response_list, extra_fields=None):
+        if 'only_ids' in extra_fields:
+            return self.model.objects.filter(remote_id__in=response_list)
+        else:
+            return super(UsersRemoteManager, self).parse_response_list(response_list, extra_fields)
+
 #    def get_or_create_from_instance(self, instance):
 #        #DatabaseError: invalid byte sequence for encoding "UTF8": 0xeda0bc
 #        #HINT:  This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by "client_encoding".
@@ -323,12 +329,14 @@ class User(VkontakteIDModel):
         from vkontakte_wall.models import Post
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
-    def fetch_friends(self):
+    def fetch_friends(self, only_existing_users=False, **kwargs):
         if self.is_deactivated:
             return False
 
+        # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
+        kwargs = {'fields': '', 'extra_fields': {'only_ids': True}} if only_existing_users else {'fields': 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'}
         try:
-            users = User.remote.fetch(method='friends', uid=self.remote_id, fields='uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo')
+            users = User.remote.fetch(method='friends', uid=self.remote_id, **kwargs)
         except VkontakteError, e:
             if e.code == 15:
                 # update current user, make him deactivated
