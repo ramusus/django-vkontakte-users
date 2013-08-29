@@ -330,6 +330,7 @@ class User(VkontakteIDModel):
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
     def fetch_friends(self, only_existing_users=False, **kwargs):
+        log.debug("Start updating friends of user %s" % self)
         if self.is_deactivated:
             return False
 
