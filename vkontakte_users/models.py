@@ -337,6 +337,7 @@ class User(VkontakteIDModel):
         kwargs = {'fields': '', 'extra_fields': {'only_ids': True}} if only_existing_users else {'fields': 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'}
         try:
             users = User.remote.fetch(method='friends', uid=self.remote_id, **kwargs)
+            log.debug("Found %d friends of user %s" % (len(users), self))
         except VkontakteError, e:
             if e.code == 15:
                 # update current user, make him deactivated
@@ -346,11 +347,15 @@ class User(VkontakteIDModel):
                 raise e
 
         self.friends_users.clear()
+        log.debug("Cleared friends of user %s" % (self))
+
         for user in users:
             self.friends_users.add(user)
+        log.debug("New friends to user %s attached" % (self))
 
         self.friends_count = self.friends_users.count()
         self.save()
+        log.debug("Friends count %s of user %s updated" % (self.friends_count, self))
 
         return self.friends_users.all()
 
