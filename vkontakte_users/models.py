@@ -93,7 +93,7 @@ class UsersRemoteManager(VkontakteManager):
             return self.model.objects.active().get(screen_name=slug)
 
     def parse_response_list(self, response_list, extra_fields=None):
-        if 'only_ids' in extra_fields:
+        if extra_fields and 'only_ids' in extra_fields:
             return self.model.objects.filter(remote_id__in=response_list)
         else:
             return super(UsersRemoteManager, self).parse_response_list(response_list, extra_fields)
