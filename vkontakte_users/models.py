@@ -15,6 +15,7 @@ log = logging.getLogger('vkontakte_users')
 
 VKONTAKTE_USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
 
+USER_FIELDS = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,movies,tv,books,games,about,connections,universities,schools'
 USER_SEX_CHOICES = ((1, u'жен.'),(2, u'муж.'))
 USER_RELATION_CHOICES = (
     (1, u'Не женат / замужем'),
@@ -71,12 +72,14 @@ class UsersRemoteManager(VkontakteManager):
     def api_call(self, method='get', **kwargs):
         '''
         Override parent behaviour without namespace property
+        TODO: move all kwargs manipulations to fetch method
         '''
         if 'fields' not in kwargs:
-            kwargs['fields'] = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,movies,tv,books,games,about,connections,universities,schools'
+            kwargs['fields'] = USER_FIELDS
         if 'ids' in kwargs:
             kwargs['uids'] = ','.join(map(lambda i: str(i), kwargs.pop('ids')))
-        return api_call(self.methods[method], **kwargs)
+
+        return super(UsersRemoteManager, self).api_call(method, **kwargs)
 
     def get_by_slug(self, slug):
         '''
@@ -151,7 +154,6 @@ class User(VkontakteIDModel):
         ordering = ['remote_id']
 
     remote_pk_field = 'uid'
-    methods_namespace = 'users'
 
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
