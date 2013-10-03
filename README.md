@@ -1,5 +1,7 @@
-Django Vkontakte Users [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-users.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-users) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-users/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-users)
+Django Vkontakte Users
 ======================
+
+[![PyPI version](https://badge.fury.io/py/django-vkontakte-users.png)](http://badge.fury.io/py/django-vkontakte-users) [![Build Status](https://travis-ci.org/ramusus/django-vkontakte-users.png?branch=master)](https://travis-ci.org/ramusus/django-vkontakte-users) [![Coverage Status](https://coveralls.io/repos/ramusus/django-vkontakte-users/badge.png?branch=master)](https://coveralls.io/r/ramusus/django-vkontakte-users)
 
 Приложение позволяет взаимодействовать с профилями пользователей Вконтакте через Вконтакте API используя стандартные модели Django
 
@@ -31,8 +33,8 @@ Django Vkontakte Users [![Build Status](https://travis-ci.org/ramusus/django-vko
 Покрытие методов API
 --------------------
 
-* [users.get](http://vk.com/developers.php?oid=-1&p=users.get) - возвращает расширенную информацию о пользователях;
-* [friends.get](http://vk.com/developers.php?oid=-1&p=friends.get) – возвращает список id друзей пользователя;
+* [users.get](http://vk.com/dev/users.get) - возвращает расширенную информацию о пользователях;
+* [friends.get](http://vk.com/dev/friends.get) – возвращает список id друзей пользователя;
 
 Примеры использования
 ---------------------
