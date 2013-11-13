@@ -61,7 +61,8 @@ class UsersRemoteManager(VkontakteManager):
         # TODO: remove here restriction to fetch no more then 1000 users per time
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
-            ids_actual = list(self.model.objects.filter(fetched__gte=datetime.now()-timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS), remote_id__in=ids).values_list('remote_id', flat=True))
+            expired_at = datetime.now() - timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS)
+            ids_actual = list(self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True))
             kwargs['ids'] = set(ids).difference(set(ids_actual))
             if len(kwargs['ids']):
                 super(UsersRemoteManager, self).fetch(**kwargs)
