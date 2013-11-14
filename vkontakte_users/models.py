@@ -70,7 +70,8 @@ class UsersRemoteManager(VkontakteManager):
             ids = kwargs['ids']
             expired_at = datetime.now() - timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS)
             ids_non_expired = self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
-            kwargs['ids'] = set(ids).difference(set(ids_non_expired))
+            kwargs['ids'] = list(set(ids).difference(set(ids_non_expired)))
+            users = None
             if len(kwargs['ids']):
                 users = self._fetch(**kwargs)
             return self._renew_queryset(users, ids)
@@ -93,7 +94,7 @@ class UsersRemoteManager(VkontakteManager):
             return super(UsersRemoteManager, self).fetch(**kwargs)
 
     def _renew_queryset(self, users, ids):
-        if len(ids) <= self.fetch_users_limit:
+        if len(ids) <= self.fetch_users_limit and users:
             return users
         else:
             return self.model.objects.filter(remote_id__in=ids)
