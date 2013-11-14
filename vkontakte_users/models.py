@@ -198,7 +198,7 @@ class User(VkontakteIDModel):
 
     activity = models.TextField()
     relation = models.SmallIntegerField(null=True, choices=USER_RELATION_CHOICES)
-    wall_comments = models.BooleanField()
+    wall_comments = models.NullBooleanField()
 
     graduation = models.PositiveIntegerField(u'Дата окончания вуза', null=True)
     university = models.PositiveIntegerField(null=True)
@@ -206,7 +206,7 @@ class User(VkontakteIDModel):
     faculty = models.PositiveIntegerField(null=True)
     faculty_name = models.CharField(max_length=500)
 
-    has_mobile = models.BooleanField()
+    has_mobile = models.NullBooleanField()
     home_phone = models.CharField(max_length=50)
     mobile_phone = models.CharField(max_length=50)
 
