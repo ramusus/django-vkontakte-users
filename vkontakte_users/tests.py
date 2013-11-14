@@ -2,7 +2,9 @@
 from django.test import TestCase
 from vkontakte_places.models import City, Country
 from models import User
+from factories import UserFactory
 import simplejson as json
+import mock
 
 class VkontakteUsersTest(TestCase):
 
@@ -56,6 +58,16 @@ class VkontakteUsersTest(TestCase):
         self.assertTrue(users[0].sum_counters > 0)
         self.assertTrue(users[0].followers > 0)
         self.assertTrue(users[0].counters_updated is not None)
+
+    @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=lambda **k: [UserFactory.create(remote_id=i) for i in k['ids']])
+    def test_fetch_users_more_than_1000(self, fetch):
+
+        users = User.remote.fetch(ids=range(0, 1500))
+        self.assertEqual(len(users), 1500)
+        self.assertEqual(User.objects.count(), 1500)
+
+        self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1000)
+        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 500)
 
     def test_parse_user(self):
 

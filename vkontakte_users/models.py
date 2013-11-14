@@ -30,6 +30,12 @@ USER_RELATION_CHOICES = (
 USER_PHOTO_DEACTIVATED_URL = 'http://vk.com/images/deactivated_'
 USER_NO_PHOTO_URL = 'http://vkontakte.ru/images/camera_'
 
+def list_chunks_iterator(l, n):
+    """ Yield successive n-sized chunks from l.
+    """
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
 class ParseUsersMixin(object):
     '''
     Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
@@ -57,18 +63,40 @@ class UsersManager(models.Manager):
 
 class UsersRemoteManager(VkontakteManager):
 
+    fetch_users_limit = 1000
+
     def fetch(self, **kwargs):
-        # TODO: remove here restriction to fetch no more then 1000 users per time
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
             expired_at = datetime.now() - timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS)
-            ids_actual = list(self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True))
-            kwargs['ids'] = set(ids).difference(set(ids_actual))
+            ids_non_expired = self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
+            kwargs['ids'] = set(ids).difference(set(ids_non_expired))
             if len(kwargs['ids']):
-                super(UsersRemoteManager, self).fetch(**kwargs)
-            return self.model.objects.filter(remote_id__in=ids)
+                users = self._fetch(**kwargs)
+            return self._renew_queryset(users, ids)
+        else:
+            return self._fetch(**kwargs)
+
+    def _fetch(self, **kwargs):
+        '''
+        Method gives ability to fetch more than 1000 users at once
+        '''
+        ids = kwargs.pop('ids', None)
+        if ids:
+            kwargs_sliced = dict(kwargs)
+            for chunk in list_chunks_iterator(ids, self.fetch_users_limit):
+                kwargs_sliced['ids'] = chunk
+                users = super(UsersRemoteManager, self).fetch(**kwargs_sliced)
+
+            return self._renew_queryset(users, ids)
         else:
             return super(UsersRemoteManager, self).fetch(**kwargs)
+
+    def _renew_queryset(self, users, ids):
+        if len(ids) <= self.fetch_users_limit:
+            return users
+        else:
+            return self.model.objects.filter(remote_id__in=ids)
 
     def api_call(self, method='get', **kwargs):
         '''
