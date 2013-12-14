@@ -66,6 +66,10 @@ class UsersRemoteManager(VkontakteManager):
     fetch_users_limit = 1000
 
     def fetch(self, **kwargs):
+        '''
+        Additional attributes:
+         * only_expired - flag to fetch users, who fetched earlie than VKONTAKTE_USERS_INFO_TIMEOUT_DAYS days ago
+        '''
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
             expired_at = datetime.now() - timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS)
@@ -160,6 +164,61 @@ class UsersRemoteManager(VkontakteManager):
 #
 #        return instances
 
+    def fetch_instance_likes(self, instance, likes_type, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
+        if count > 1000:
+            raise ValueError("Parameter 'count' can not be more than 1000")
+        if filter not in ['likes', 'copies']:
+            raise ValueError("Parameter 'filter' should be equal to 'likes' or 'copies'")
+        if likes_type is None:
+            raise ImproperlyConfigured("'likes_type' attribute should be specified")
+
+        # type
+        # тип Like-объекта. Подробнее о типах объектов можно узнать на странице Список типов Like-объектов.
+        kwargs['type'] = likes_type
+        # owner_id
+        # идентификатор владельца Like-объекта (id пользователя или id приложения). Если параметр type равен sitepage, то в качестве owner_id необходимо передавать id приложения. Если параметр не задан, то считается, что он равен либо идентификатору текущего пользователя, либо идентификатору текущего приложения (если type равен sitepage).
+        kwargs['owner_id'] = owner_id
+        # item_id
+        # идентификатор Like-объекта. Если type равен sitepage, то параметр item_id может содержать значение параметра page_id, используемый при инициализации виджета «Мне нравится».
+        kwargs['item_id'] = item_id
+        # page_url
+        # url страницы, на которой установлен виджет «Мне нравится». Используется вместо параметра item_id.
+
+        # filter
+        # указывает, следует ли вернуть всех пользователей, добавивших объект в список "Мне нравится" или только тех, которые рассказали о нем друзьям. Параметр может принимать следующие значения:
+        # likes – возвращать всех пользователей
+        # copies – возвращать только пользователей, рассказавших об объекте друзьям
+        # По умолчанию возвращаются все пользователи.
+        kwargs['filter'] = filter
+        # friends_only
+        # указывает, необходимо ли возвращать только пользователей, которые являются друзьями текущего пользователя. Параметр может принимать следующие значения:
+        # 0 – возвращать всех пользователей в порядке убывания времени добавления объекта
+        # 1 – возвращать только друзей текущего пользователя в порядке убывания времени добавления объекта
+        # Если метод был вызван без авторизации или параметр не был задан, то считается, что он равен 0.
+        kwargs['friends_only'] = 0
+        # offset
+        # смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то считается, что он равен 0.
+        kwargs['offset'] = int(offset)
+        # count
+        # количество возвращаемых идентификаторов пользователей.
+        # Если параметр не задан, то считается, что он равен 100, если не задан параметр friends_only, в противном случае 10.
+        # Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
+        kwargs['count'] = int(count)
+
+        m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
+        like_users = getattr(instance, m2m_field_name)
+
+        response = api_call('likes.getList', **kwargs)
+        ids = response['users']
+
+        # fetch users
+        users = self.fetch(ids=ids, only_expired=True) if ids else self.none()
+        for user in users:
+            like_users.add(user)
+
+        return users
+
+
 class UserRelative(models.Model):
 
     TYPE_CHOICES = (
@@ -212,7 +271,7 @@ class User(VkontakteIDModel):
 
     photo_fields = 'photo,photo_big,photo_medium,photo_medium_rec,photo_rec'
     photo = models.URLField()
-    photo_big = models.URLField()
+    photo_big = models.URLField(db_index=True)
     photo_medium = models.URLField()
     photo_medium_rec = models.URLField()
     photo_rec = models.URLField()

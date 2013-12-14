@@ -35,6 +35,7 @@ Django Vkontakte Users
 
 * [users.get](http://vk.com/dev/users.get) - возвращает расширенную информацию о пользователях;
 * [friends.get](http://vk.com/dev/friends.get) – возвращает список id друзей пользователя;
+* [likes.getList](http://vk.com/dev/likes.getList) – возвращает список пользователей, которые добавили объект в список «Мне нравится»;
 
 Примеры использования
 ---------------------
