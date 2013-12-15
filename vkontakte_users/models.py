@@ -213,7 +213,7 @@ class UsersRemoteManager(VkontakteManager):
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         m2m_model = getattr(instance, m2m_field_name).through
         try:
-            rel_field_name = [field.name for field in m2m_model._meta.local_fields if field.rel and field.rel.to == instance.__class__][0]
+            rel_field_name = [field.name for field in m2m_model._meta.local_fields if field.name not in ['id','user']][0]
         except IndexError:
             raise ImproperlyConfigured("Impossible to find name of relation attribute for instance %s in m2m like users table" % instance)
 
