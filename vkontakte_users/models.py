@@ -212,25 +212,25 @@ class UsersRemoteManager(VkontakteManager):
 
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         m2m_model = getattr(instance, m2m_field_name).through
+        try:
+            rel_field_name = [field.name for field in m2m_model._meta.local_fields if field.rel and field.rel.to == instance.__class__][0]
+        except IndexError:
+            raise ImproperlyConfigured("Impossible to find name of relation attribute for instance %s in m2m like users table" % instance)
 
         ids = self.fetch_likes_user_ids(*args, **kwargs)
-
-        if ids:
-            # fetch users
-            users = self.fetch(ids=ids, only_expired=True).values_list('pk', flat=True)
-
-            try:
-                rel_field_name = [field.name for field in m2m_model._meta.local_fields if field.rel and field.rel.to == instance.__class__][0]
-            except IndexError:
-                raise ImproperlyConfigured("Impossible to find name of relation attribute for instance %s in m2m like users table" % instance)
-
-            # delete old relations and make new
-            m2m_model.objects.filter(**{'user_id__in': users, rel_field_name: instance}).delete()
-            m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users])
-
-            return users
-        else:
+        if not ids:
             return self.none()
+
+        # fetch users
+        users = self.fetch(ids=ids, only_expired=True).values_list('pk', flat=True)
+
+        # delete old relations
+        if kwargs.get('offset', 0) == 0:
+            m2m_model.objects.filter(**{rel_field_name: instance}).delete()
+        # make new
+        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users])
+
+        return users
 
 
 class UserRelative(models.Model):
