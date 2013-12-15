@@ -164,7 +164,7 @@ class UsersRemoteManager(VkontakteManager):
 #
 #        return instances
 
-    def fetch_instance_likes(self, instance, likes_type, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
+    def fetch_likes_user_ids(self, likes_type, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
         if count > 1000:
             raise ValueError("Parameter 'count' can not be more than 1000")
         if filter not in ['likes', 'copies']:
@@ -205,11 +205,15 @@ class UsersRemoteManager(VkontakteManager):
         # Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
         kwargs['count'] = int(count)
 
+        response = api_call('likes.getList', **kwargs)
+        return response['users']
+
+    def fetch_instance_likes(self, instance, *args, **kwargs):
+
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         like_users = getattr(instance, m2m_field_name)
 
-        response = api_call('likes.getList', **kwargs)
-        ids = response['users']
+        ids = self.fetch_likes_user_ids(*args, **kwargs)
 
         # fetch users
         users = self.fetch(ids=ids, only_expired=True) if ids else self.none()
