@@ -227,6 +227,7 @@ class UsersRemoteManager(VkontakteManager):
         # delete old relations
         if kwargs.get('offset', 0) == 0:
             m2m_model.objects.filter(**{rel_field_name: instance}).delete()
+
         # make new
         m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users])
 
