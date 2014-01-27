@@ -329,8 +329,8 @@ class User(VkontakteIDModel):
     user_videos = models.PositiveIntegerField(u'Видеозаписей с пользователем', default=0)
 
     # extra fields, based on self.photo_fields
-    is_deactivated = models.BooleanField(u'Деактивирован?', default=False)
-    has_avatar = models.BooleanField(u'Есть аватар?', default=False)
+    is_deactivated = models.BooleanField(u'Деактивирован?', default=False, db_index=True)
+    has_avatar = models.BooleanField(u'Есть аватар?', default=False, db_index=True)
 
     objects = UsersManager()
     remote = UsersRemoteManager(remote_pk=('remote_id',), methods={
