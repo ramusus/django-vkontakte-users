@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from vkontakte_places.models import City, Country
-from models import User
+from models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL
 from factories import UserFactory
 import simplejson as json
 import mock
@@ -83,9 +83,9 @@ class VkontakteUsersTest(TestCase):
                   "last_name": "\u0422\u0430\u0440\u0430\u043d\u0443\u0445\u0438\u043d\u0430",
                   "mobile_phone": "8951859*1**",
                   "online": 0,
-                  "photo": "http://cs9825.userapi.com/u51443905/e_8c5823a3.jpg",
+                  "photo": "%s",
                   "photo_big": "http://cs9825.userapi.com/u51443905/a_f732002c.jpg",
-                  "photo_medium": "http://cs9825.userapi.com/u51443905/b_c3e23502.jpg",
+                  "photo_medium": "%s",
                   "rate": "95",
                   "screen_name": "id51443905",
                   "sex": 1,
@@ -94,7 +94,7 @@ class VkontakteUsersTest(TestCase):
                   "university": "0",
                   "university_name": ""}
             ]}
-            '''
+            ''' % (USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL)
         instance = User()
         instance.parse(json.loads(response)['response'][0])
         instance.save()
@@ -110,15 +110,17 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(instance.home_phone, u'')
         self.assertEqual(instance.last_name, u'Таранухина')
         self.assertEqual(instance.mobile_phone, '8951859*1**')
-        self.assertEqual(instance.photo, 'http://cs9825.userapi.com/u51443905/e_8c5823a3.jpg')
+        self.assertEqual(instance.photo, USER_PHOTO_DEACTIVATED_URL)
         self.assertEqual(instance.photo_big, 'http://cs9825.userapi.com/u51443905/a_f732002c.jpg')
-        self.assertEqual(instance.photo_medium, 'http://cs9825.userapi.com/u51443905/b_c3e23502.jpg')
+        self.assertEqual(instance.photo_medium, USER_NO_PHOTO_URL)
         self.assertEqual(instance.rate, 95)
         self.assertEqual(instance.screen_name, u'id51443905')
         self.assertEqual(instance.sex, 1)
         self.assertEqual(instance.timezone, 3)
         self.assertEqual(instance.university, 0)
         self.assertEqual(instance.university_name, u'')
+        self.assertEqual(instance.is_deactivated, True)
+        self.assertEqual(instance.has_avatar, False)
 
     def test_bad_activity(self):
 

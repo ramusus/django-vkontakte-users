@@ -50,16 +50,16 @@ class ParseUsersMixin(object):
 class UsersManager(models.Manager):
 
     def deactivated(self):
-        return self.filter(photo_big__startswith=USER_PHOTO_DEACTIVATED_URL)
+        return self.filter(is_deactivated=True)
 
     def active(self):
-        return self.exclude(photo_big__startswith=USER_PHOTO_DEACTIVATED_URL)
+        return self.filter(is_deactivated=False)
 
-    def has_avatars(self):
-        return self.filter(photo_big__contains='userapi.com')
+    def with_avatar(self):
+        return self.filter(has_avatar=True)
 
-    def no_avatars(self):
-        return self.filter(photo_big__startswith=USER_NO_PHOTO_URL)
+    def without_avatar(self):
+        return self.filter(has_avatar=False)
 
 class UsersRemoteManager(VkontakteManager):
 
@@ -258,6 +258,7 @@ class User(VkontakteIDModel):
         ordering = ['remote_id']
 
     remote_pk_field = 'uid'
+    slug_prefix = 'id'
 
     first_name = models.CharField(max_length=200)
     last_name = models.CharField(max_length=200)
@@ -284,9 +285,9 @@ class User(VkontakteIDModel):
     home_phone = models.CharField(max_length=50)
     mobile_phone = models.CharField(max_length=50)
 
-    photo_fields = 'photo,photo_big,photo_medium,photo_medium_rec,photo_rec'
+    photo_fields = ['photo','photo_big','photo_medium','photo_medium_rec','photo_rec']
     photo = models.URLField()
-    photo_big = models.URLField(db_index=True)
+    photo_big = models.URLField()
     photo_medium = models.URLField()
     photo_medium_rec = models.URLField()
     photo_rec = models.URLField()
@@ -327,13 +328,15 @@ class User(VkontakteIDModel):
     user_photos = models.PositiveIntegerField(u'Фотографий с пользователем', default=0)
     user_videos = models.PositiveIntegerField(u'Видеозаписей с пользователем', default=0)
 
+    # extra fields, based on self.photo_fields
+    is_deactivated = models.BooleanField(u'Деактивирован?', default=False)
+    has_avatar = models.BooleanField(u'Есть аватар?', default=False)
+
     objects = UsersManager()
     remote = UsersRemoteManager(remote_pk=('remote_id',), methods={
         'get': 'users.get',
         'friends': 'friends.get',
     })
-
-    slug_prefix = 'id'
 
     @property
     def age(self):
@@ -392,11 +395,26 @@ class User(VkontakteIDModel):
 
         super(User, self).parse(response)
 
+        self.parse_deactivated_status()
+        self.parse_avatar_presence()
+
 #        if 'uid' in response:
 #            self.remote_id = response['uid']
 
         if self.graduation == 0:
             self.graduation = None
+
+    def parse_deactivated_status(self):
+        self.is_deactivated = False
+        for field_name in self.photo_fields:
+            if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
+                self.is_deactivated = True
+
+    def parse_avatar_presence(self):
+        self.has_avatar = True
+        for field_name in self.photo_fields:
+            if USER_NO_PHOTO_URL in getattr(self, field_name):
+                self.has_avatar = False
 
     def update_counters(self):
         '''
@@ -465,20 +483,6 @@ class User(VkontakteIDModel):
         log.debug("Friends count %s of user %s updated" % (self.friends_count, self))
 
         return self.friends_users.all()
-
-    @property
-    def is_deactivated(self):
-        for field_name in self.photo_fields.split(','):
-            if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
-                return True
-        return False
-
-    @property
-    def has_avatar(self):
-        for field_name in self.photo_fields.split(','):
-            if USER_NO_PHOTO_URL in getattr(self, field_name):
-                return False
-        return True
 
     def get_sex(self):
         return dict(USER_SEX_CHOICES).get(self.sex)
