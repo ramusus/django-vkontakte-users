@@ -6,18 +6,35 @@ from factories import UserFactory
 import simplejson as json
 import mock
 
+USER_ID = 1
+USER_SCREEN_NAME = 'durov'
+
 class VkontakteUsersTest(TestCase):
+
+    def test_refresh_user(self):
+
+        instance = User.remote.fetch(ids=[USER_ID])[0]
+        self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
+
+        instance.screen_name = 'temp'
+        instance.save()
+        self.assertEqual(instance.screen_name, 'temp')
+
+        instance.refresh()
+        self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
 
 #    def test_fetch_user_relatives(self):
 #
 #        users = User.remote.fetch(ids=[1,6])
 #
-#        self.assertEqual(users[0].relatives.count(), 0)
+#        instance = users[0]
+#
+#        self.assertEqual(instance.relatives.count(), 0)
 #
 #        users = User.remote.fetch(ids=[1,6])
 #
-#        self.assertEqual(users[0].relatives.count(), 1) # fix it, design decision needed
-#        self.assertEqual(users[0].relatives.all()[0], users[1])
+#        self.assertEqual(instance.relatives.count(), 1) # fix it, design decision needed
+#        self.assertEqual(instance.relatives.all()[0], users[1])
 
     def test_fetch_user_friends(self):
 
@@ -35,29 +52,34 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(len(users), 2)
         self.assertEqual(User.objects.count(), 2)
 
-        self.assertEqual(users[0].remote_id, 1)
-        self.assertEqual(users[0].first_name, u'Павел')
-        self.assertEqual(users[0].last_name, u'Дуров')
-#        self.assertEqual(users[0].twitter, u'durov')
-#        self.assertEqual(users[0].livejournal, u'durov')
-#        self.assertEqual(users[0].relation, 1)
-        self.assertEqual(users[0].wall_comments, False)
+        instance = users[0]
+
+        self.assertEqual(instance.remote_id, 1)
+        self.assertEqual(instance.first_name, u'Павел')
+        self.assertEqual(instance.last_name, u'Дуров')
+        self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
+#        self.assertEqual(instance.twitter, u'durov')
+#        self.assertEqual(instance.livejournal, u'durov')
+#        self.assertEqual(instance.relation, 1)
+        self.assertEqual(instance.wall_comments, False)
 
         # test counters
-        users[0].update_counters()
-        self.assertTrue(users[0].followers > 0)
-        self.assertTrue(users[0].notes > 0)
-        self.assertTrue(users[0].sum_counters > 0)
-        self.assertTrue(users[0].counters_updated is not None)
+        instance.update_counters()
+        self.assertTrue(instance.followers > 0)
+        self.assertTrue(instance.notes > 0)
+        self.assertTrue(instance.sum_counters > 0)
+        self.assertTrue(instance.counters_updated is not None)
 
         # fetch another time
         users = User.remote.fetch(ids=[1,2])
         self.assertEqual(User.objects.count(), 2)
 
+        instance = users[0]
+
         # test for keeping old counters
-        self.assertTrue(users[0].sum_counters > 0)
-        self.assertTrue(users[0].followers > 0)
-        self.assertTrue(users[0].counters_updated is not None)
+        self.assertTrue(instance.sum_counters > 0)
+        self.assertTrue(instance.followers > 0)
+        self.assertTrue(instance.counters_updated is not None)
 
     @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=lambda **k: [UserFactory.create(remote_id=i) for i in k['ids']])
     def test_fetch_users_more_than_1000(self, fetch):

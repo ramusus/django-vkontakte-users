@@ -330,7 +330,7 @@ class User(VkontakteIDModel):
 
     # extra fields, based on self.photo_fields
     is_deactivated = models.BooleanField(u'Деактивирован?', default=False, db_index=True)
-    has_avatar = models.BooleanField(u'Есть аватар?', default=False, db_index=True)
+    has_avatar = models.BooleanField(u'Есть аватар?', default=True, db_index=True)
 
     objects = UsersManager()
     remote = UsersRemoteManager(remote_pk=('remote_id',), methods={
@@ -403,6 +403,10 @@ class User(VkontakteIDModel):
 
         if self.graduation == 0:
             self.graduation = None
+
+    @property
+    def refresh_kwargs(self):
+        return {'ids': [self.remote_id]}
 
     def parse_deactivated_status(self):
         self.is_deactivated = False
