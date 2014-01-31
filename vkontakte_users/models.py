@@ -68,7 +68,7 @@ class UsersRemoteManager(VkontakteManager):
     def fetch(self, **kwargs):
         '''
         Additional attributes:
-         * only_expired - flag to fetch users, who fetched earlie than VKONTAKTE_USERS_INFO_TIMEOUT_DAYS days ago
+         * only_expired - flag to fetch only users, fetched earlie than VKONTAKTE_USERS_INFO_TIMEOUT_DAYS days ago
         '''
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
@@ -98,6 +98,9 @@ class UsersRemoteManager(VkontakteManager):
             return super(UsersRemoteManager, self).fetch(**kwargs)
 
     def _renew_queryset(self, users, ids):
+        '''
+        Return argument users if ids < limit or get queryset with whole ammount of users by ids
+        '''
         if len(ids) <= self.fetch_users_limit and users:
             return users
         else:
@@ -250,12 +253,12 @@ class UserRelative(models.Model):
 
 class User(VkontakteIDModel):
     '''
+    Model of vkontakte user
     TODO: implement relatives, schools and universities connections
     '''
     class Meta:
         verbose_name = u'Пользователь Вконтакте'
         verbose_name_plural = u'Пользователи Вконтакте'
-        ordering = ['remote_id']
 
     remote_pk_field = 'uid'
     slug_prefix = 'id'
