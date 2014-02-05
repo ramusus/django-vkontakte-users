@@ -212,6 +212,7 @@ class UsersRemoteManager(VkontakteManager):
         response = api_call('likes.getList', **kwargs)
         return response['users']
 
+    @transaction.commit_on_success
     def fetch_instance_likes(self, instance, *args, **kwargs):
 
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
@@ -381,11 +382,11 @@ class User(VkontakteIDModel):
 
     def parse(self, response):
 
-        if response.get('city'):
+        if 'city' in response:
             self.city = City.objects.get_or_create(remote_id=response.pop('city'))[0]
-        if response.get('country'):
+        if 'country' in response:
             self.country = Country.objects.get_or_create(remote_id=response.pop('country'))[0]
-        if response.get('relatives'):
+        if 'relatives' in response:
             relatives = response.pop('relatives')
             # doesn't work becouse of self.id will be set lately
             if self.id:
@@ -461,6 +462,7 @@ class User(VkontakteIDModel):
         from vkontakte_wall.models import Post
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
+    @transaction.commit_on_success
     def fetch_friends(self, only_existing_users=False, **kwargs):
         log.debug("Start updating friends of user %s" % self)
         if self.is_deactivated:
