@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.conf import settings
 from datetime import datetime
@@ -65,6 +65,7 @@ class UsersRemoteManager(VkontakteManager):
 
     fetch_users_limit = 1000
 
+    @transaction.commit_on_success
     def fetch(self, **kwargs):
         '''
         Additional attributes:
