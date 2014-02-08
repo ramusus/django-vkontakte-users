@@ -418,12 +418,14 @@ class User(VkontakteIDModel):
         for field_name in self.photo_fields:
             if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
                 self.is_deactivated = True
+                return
 
     def parse_avatar_presence(self):
         self.has_avatar = True
         for field_name in self.photo_fields:
             if USER_NO_PHOTO_URL in getattr(self, field_name):
                 self.has_avatar = False
+                return
 
     def update_counters(self):
         '''

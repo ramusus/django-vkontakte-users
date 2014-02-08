@@ -108,6 +108,7 @@ class VkontakteUsersTest(TestCase):
                   "photo": "%s",
                   "photo_big": "http://cs9825.userapi.com/u51443905/a_f732002c.jpg",
                   "photo_medium": "%s",
+                  "photo_medium_rec": false,
                   "rate": "95",
                   "screen_name": "id51443905",
                   "sex": 1,
@@ -135,6 +136,7 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(instance.photo, USER_PHOTO_DEACTIVATED_URL)
         self.assertEqual(instance.photo_big, 'http://cs9825.userapi.com/u51443905/a_f732002c.jpg')
         self.assertEqual(instance.photo_medium, USER_NO_PHOTO_URL)
+        self.assertEqual(instance.photo_medium_rec, '')
         self.assertEqual(instance.rate, 95)
         self.assertEqual(instance.screen_name, u'id51443905')
         self.assertEqual(instance.sex, 1)
