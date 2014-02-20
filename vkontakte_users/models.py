@@ -13,7 +13,7 @@ import logging
 
 log = logging.getLogger('vkontakte_users')
 
-VKONTAKTE_USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
+USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
 
 USER_FIELDS = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,movies,tv,books,games,about,connections,universities,schools'
 USER_SEX_CHOICES = ((1, u'жен.'),(2, u'муж.'))
@@ -73,7 +73,7 @@ class UsersRemoteManager(VkontakteManager):
         '''
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
-            expired_at = datetime.now() - timedelta(VKONTAKTE_USERS_INFO_TIMEOUT_DAYS)
+            expired_at = datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
             ids_non_expired = self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
             kwargs['ids'] = list(set(ids).difference(set(ids_non_expired)))
             users = None
@@ -100,9 +100,9 @@ class UsersRemoteManager(VkontakteManager):
 
     def _renew_queryset(self, users, ids):
         '''
-        Return argument users if ids < limit or get queryset with whole ammount of users by ids
+        Return argument `users` if ammount of `users` is equal to ammount `ids` we need to fetch
         '''
-        if len(ids) <= self.fetch_users_limit and users:
+        if users is not None and len(ids) == users.count():
             return users
         else:
             return self.model.objects.filter(remote_id__in=ids)
@@ -227,14 +227,14 @@ class UsersRemoteManager(VkontakteManager):
             return self.none()
 
         # fetch users
-        users = self.fetch(ids=ids, only_expired=True).values_list('pk', flat=True)
+        users = self.fetch(ids=ids, only_expired=True)
 
         # delete old relations
         if kwargs.get('offset', 0) == 0:
             m2m_model.objects.filter(**{rel_field_name: instance}).delete()
 
         # make new
-        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users])
+        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users.values_list('pk', flat=True)])
 
         return users
 
@@ -257,6 +257,7 @@ class User(VkontakteIDModel):
     '''
     Model of vkontakte user
     TODO: implement relatives, schools and universities connections
+    TODO: make field screen_name unique
     '''
     class Meta:
         verbose_name = u'Пользователь Вконтакте'

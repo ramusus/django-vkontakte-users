@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from vkontakte_places.models import City, Country
-from models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL
+from models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL, USERS_INFO_TIMEOUT_DAYS
 from factories import UserFactory
+from datetime import datetime, timedelta
 import simplejson as json
 import mock
 
 USER_ID = 1
 USER_SCREEN_NAME = 'durov'
+
+def user_fetch_mock(ids, **kwargs):
+    users = [User.objects.get(remote_id=id) if User.objects.filter(remote_id=id).count() == 1 else UserFactory(remote_id=id) for id in ids]
+    ids = [user.pk for user in users]
+    return User.objects.filter(pk__in=ids)
 
 class VkontakteUsersTest(TestCase):
 
@@ -81,7 +87,7 @@ class VkontakteUsersTest(TestCase):
         self.assertTrue(instance.followers > 0)
         self.assertTrue(instance.counters_updated is not None)
 
-    @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=lambda **k: [UserFactory.create(remote_id=i) for i in k['ids']])
+    @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=user_fetch_mock)
     def test_fetch_users_more_than_1000(self, fetch):
 
         users = User.remote.fetch(ids=range(0, 1500))
@@ -90,6 +96,23 @@ class VkontakteUsersTest(TestCase):
 
         self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1000)
         self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 500)
+
+    @mock.patch('vkontakte_users.models.User.remote._fetch', side_effect=user_fetch_mock)
+    def test_fetching_expired_users(self, fetch):
+
+        users = User.remote.fetch(ids=range(0, 150))
+
+        # make all users fresh
+        User.objects.all().update(fetched=datetime.now())
+        # make 50 of them expired
+        User.objects.filter(remote_id__lt=50).update(fetched=datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
+
+        users_new = User.remote.fetch(ids=range(0, 150), only_expired=True)
+
+        self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 150)
+        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 50)
+        self.assertEqual(users.count(), 150)
+        self.assertEqual(users.count(), users_new.count())
 
     def test_parse_user(self):
 
