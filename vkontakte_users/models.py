@@ -5,6 +5,7 @@ from django.conf import settings
 from datetime import datetime
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
+from vkontakte_api.decorators import fetch_all
 from vkontakte_api.models import VkontakteManager, VkontakteIDModel
 from vkontakte_places.models import City, Country
 from dateutil import parser
@@ -168,6 +169,7 @@ class UsersRemoteManager(VkontakteManager):
 #
 #        return instances
 
+    @fetch_all(default_count=1000)
     def fetch_likes_user_ids(self, likes_type, owner_id, item_id, offset=0, count=1000, filter='likes', *args, **kwargs):
         if count > 1000:
             raise ValueError("Parameter 'count' can not be more than 1000")
@@ -209,6 +211,8 @@ class UsersRemoteManager(VkontakteManager):
         # Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
         kwargs['count'] = int(count)
 
+        log.debug('Fetching like users ids of %s %s_%s, offset %d' % (likes_type, owner_id, item_id, offset))
+
         response = api_call('likes.getList', **kwargs)
         return response['users']
 
@@ -229,12 +233,15 @@ class UsersRemoteManager(VkontakteManager):
         # fetch users
         users = self.fetch(ids=ids, only_expired=True)
 
-        # delete old relations
-        if kwargs.get('offset', 0) == 0:
-            m2m_model.objects.filter(**{rel_field_name: instance}).delete()
+        ids_current = m2m_model.objects.filter(**{rel_field_name: instance}).values_list('user_id', flat=True)
+        ids_new = users.values_list('pk', flat=True)
+        ids_left = set(ids_current).difference(set(ids_new))
+        ids_entered = set(ids_new).difference(set(ids_current))
 
-        # make new
-        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in users.values_list('pk', flat=True)])
+        # delete left
+        m2m_model.objects.filter(**{'user_id__in': ids_left, rel_field_name: instance}).delete()
+        # make entered
+        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in ids_entered])
 
         return users
 
