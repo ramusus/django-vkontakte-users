@@ -6,7 +6,7 @@ from datetime import datetime
 from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_api import fields
 from vkontakte_api.decorators import fetch_all
-from vkontakte_api.models import VkontakteManager, VkontakteIDModel
+from vkontakte_api.models import VkontakteManager, VkontaktePKModel
 from vkontakte_places.models import City, Country
 from dateutil import parser
 from datetime import timedelta, datetime
@@ -260,7 +260,7 @@ class UserRelative(models.Model):
     user2 = models.ForeignKey('User', related_name='user_relatives2')
     type = models.CharField(u'Тип родственной связи', max_length=20, choices=TYPE_CHOICES)
 
-class User(VkontakteIDModel):
+class User(VkontaktePKModel):
     '''
     Model of vkontakte user
     TODO: implement relatives, schools and universities connections
