@@ -396,8 +396,8 @@ class User(VkontaktePKModel):
             self.country = Country.objects.get_or_create(remote_id=response.pop('country'))[0]
         if 'relatives' in response:
             relatives = response.pop('relatives')
-            # doesn't work becouse of self.id will be set lately
-            if self.id:
+            # doesn't work becouse of self.pk will be set lately
+            if self.pk:
                 for relative in relatives:
                     try:
                         user_relative = UserRelative(type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.uid))
