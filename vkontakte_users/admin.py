@@ -14,9 +14,10 @@ class UserAdmin(VkontakteModelAdmin):
     list_display_links = ('first_name','last_name')
     list_filter = ('sex','has_mobile','timezone',)
     search_fields = ('first_name','last_name','screen_name')
+    exclude = ('friends_users',)
 
     def get_readonly_fields(self, request, obj=None):
         fields = super(UserAdmin, self).get_readonly_fields(request, obj)
-        return fields + ['friends_users']
+        return fields
 
 admin.site.register(User, UserAdmin)
