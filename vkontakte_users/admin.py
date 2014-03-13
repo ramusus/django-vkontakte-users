@@ -16,8 +16,4 @@ class UserAdmin(VkontakteModelAdmin):
     search_fields = ('first_name','last_name','screen_name')
     exclude = ('friends_users',)
 
-    def get_readonly_fields(self, request, obj=None):
-        fields = super(UserAdmin, self).get_readonly_fields(request, obj)
-        return fields
-
 admin.site.register(User, UserAdmin)

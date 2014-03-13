@@ -270,6 +270,7 @@ class User(VkontaktePKModel):
         verbose_name = u'Пользователь Вконтакте'
         verbose_name_plural = u'Пользователи Вконтакте'
 
+    resolve_screen_name_type = 'user'
     remote_pk_field = 'uid'
     slug_prefix = 'id'
 
