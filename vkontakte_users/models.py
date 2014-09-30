@@ -67,6 +67,18 @@ class UsersRemoteManager(VkontakteManager):
     fetch_users_limit = 1000
 
     @transaction.commit_on_success
+    def fetch_friends(self, user, only_existing_users=False, **kwargs):
+
+        # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
+        if only_existing_users:
+            kwargs = {'fields': '', 'extra_fields': {'only_ids': True}}
+
+        if 'fields' not in kwargs:
+            kwargs['fields'] = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'
+
+        return self.fetch(method='friends', uid=user.remote_id, **kwargs)
+
+    @transaction.commit_on_success
     def fetch(self, **kwargs):
         '''
         Additional attributes:
@@ -218,7 +230,9 @@ class UsersRemoteManager(VkontakteManager):
 
     @transaction.commit_on_success
     def fetch_instance_likes(self, instance, *args, **kwargs):
-
+        '''
+        Deprecated. will be removed in next release, after updating vkontakte_photos app
+        '''
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         m2m_model = getattr(instance, m2m_field_name).through
         try:
@@ -474,15 +488,13 @@ class User(VkontaktePKModel):
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
     @transaction.commit_on_success
-    def fetch_friends(self, only_existing_users=False, **kwargs):
+    def fetch_friends(self, **kwargs):
         log.debug("Start updating friends of user %s" % self)
         if self.is_deactivated:
             return False
 
-        # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
-        kwargs = {'fields': '', 'extra_fields': {'only_ids': True}} if only_existing_users else {'fields': 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'}
         try:
-            users = User.remote.fetch(method='friends', uid=self.remote_id, **kwargs)
+            users = User.remote.fetch_friends(user=self, **kwargs)
             log.debug("Found %d friends of user %s" % (len(users), self))
         except VkontakteError, e:
             if e.code == 15:

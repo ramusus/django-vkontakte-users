@@ -47,9 +47,22 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(User.objects.count(), 0)
         user = User.remote.fetch(ids=[6])[0]
         self.assertEqual(User.objects.count(), 1)
-        user.fetch_friends()
+
+        users = user.fetch_friends()
+
         self.assertTrue(User.objects.count() > 100)
-        self.assertEqual(user.friends_users.count(), User.objects.count()-1)
+        self.assertEqual(users.count(), User.objects.count() - 1)
+        self.assertEqual(user.friends_users.count(), User.objects.count() - 1)
+
+        User.objects.filter(pk__gt=100).delete()
+
+        self.assertTrue(user.friends_users.count() > 10)
+        self.assertTrue(user.friends_users.count() < 20)
+
+        users_existed = user.fetch_friends(only_existing_users=True)
+
+        self.assertEqual(users.count(), users_existed.count())
+        self.assertEqual(users.count(), user.friends_users.count())
 
     def test_fetch_user(self):
 
