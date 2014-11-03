@@ -113,19 +113,20 @@ class VkontakteUsersTest(TestCase):
     @mock.patch('vkontakte_users.models.User.remote._fetch', side_effect=user_fetch_mock)
     def test_fetching_expired_users(self, fetch):
 
-        users = User.remote.fetch(ids=range(0, 150))
+        users = User.remote.fetch(ids=range(0, 1500))
+
+        self.assertEqual(users.count(), 1500)
+        self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1500)
 
         # make all users fresh
         User.objects.all().update(fetched=datetime.now())
-        # make 50 of them expired
-        User.objects.filter(remote_id__lt=50).update(fetched=datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
+        # make 500 of them expired
+        User.objects.filter(remote_id__lt=500).update(fetched=datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
 
-        users_new = User.remote.fetch(ids=range(0, 150), only_expired=True)
+        users_new = User.remote.fetch(ids=range(100, 2200), only_expired=True)
 
-        self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 150)
-        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 50)
-        self.assertEqual(users.count(), 150)
-        self.assertEqual(users.count(), users_new.count())
+        self.assertEqual(users_new.count(), 2100)
+        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 1100)  # (500 - 100) + (2200 - 1500), expired + new
 
     def test_parse_user(self):
 
