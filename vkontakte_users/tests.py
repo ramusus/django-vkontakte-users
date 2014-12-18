@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase
-from vkontakte_places.models import City, Country
-from models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL, USERS_INFO_TIMEOUT_DAYS
-from factories import UserFactory
 from datetime import datetime, timedelta
-import simplejson as json
-import mock
+from django.test import TestCase
+from django.utils import timezone
 
+import mock
+from vkontakte_places.models import City, Country
+
+from factories import UserFactory
+from models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL, USERS_INFO_TIMEOUT_DAYS
+import simplejson as json
 USER_ID = 1
 USER_SCREEN_NAME = 'durov'
 
+
 def user_fetch_mock(ids, **kwargs):
-    users = [User.objects.get(remote_id=id) if User.objects.filter(remote_id=id).count() == 1 else UserFactory(remote_id=id) for id in ids]
+    users = [User.objects.get(remote_id=id) if User.objects.filter(
+        remote_id=id).count() == 1 else UserFactory(remote_id=id) for id in ids]
     ids = [user.pk for user in users]
     return User.objects.filter(pk__in=ids)
+
 
 class VkontakteUsersTest(TestCase):
 
@@ -39,7 +44,7 @@ class VkontakteUsersTest(TestCase):
 #
 #        users = User.remote.fetch(ids=[1,6])
 #
-#        self.assertEqual(instance.relatives.count(), 1) # fix it, design decision needed
+# self.assertEqual(instance.relatives.count(), 1) # fix it, design decision needed
 #        self.assertEqual(instance.relatives.all()[0], users[1])
 
     def test_fetch_user_friends(self):
@@ -67,7 +72,7 @@ class VkontakteUsersTest(TestCase):
     def test_fetch_user(self):
 
         self.assertEqual(User.objects.count(), 0)
-        users = User.remote.fetch(ids=[1,2])
+        users = User.remote.fetch(ids=[1, 2])
         self.assertEqual(len(users), 2)
         self.assertEqual(User.objects.count(), 2)
 
@@ -90,7 +95,7 @@ class VkontakteUsersTest(TestCase):
         self.assertTrue(instance.counters_updated is not None)
 
         # fetch another time
-        users = User.remote.fetch(ids=[1,2])
+        users = User.remote.fetch(ids=[1, 2])
         self.assertEqual(User.objects.count(), 2)
 
         instance = users[0]
@@ -119,14 +124,15 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1500)
 
         # make all users fresh
-        User.objects.all().update(fetched=datetime.now())
+        User.objects.all().update(fetched=timezone.now())
         # make 500 of them expired
-        User.objects.filter(remote_id__lt=500).update(fetched=datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
+        User.objects.filter(remote_id__lt=500).update(fetched=timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
 
         users_new = User.remote.fetch(ids=range(100, 2200), only_expired=True)
 
         self.assertEqual(users_new.count(), 2100)
-        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 1100)  # (500 - 100) + (2200 - 1500), expired + new
+        # (500 - 100) + (2200 - 1500), expired + new
+        self.assertEqual(len(fetch.mock_calls[1].call_list()[0][2]['ids']), 1100)
 
     def test_parse_user(self):
 
