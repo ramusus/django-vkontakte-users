@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 from datetime import timedelta, datetime
 import logging
 
@@ -48,7 +47,7 @@ class ParseUsersMixin(object):
     '''
 
     def parse_response_users(self, response_list):
-        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': datetime.now()})
+        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': timezone.now()})
         instances = []
         for instance in users:
             instances += [User.remote.get_or_create_from_instance(instance)]
@@ -94,7 +93,7 @@ class UsersRemoteManager(VkontakteManager):
         '''
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
-            expired_at = datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
+            expired_at = timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
             ids_non_expired = self.model.objects.filter(
                 fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
             kwargs['ids'] = list(set(ids).difference(set(ids_non_expired)))
@@ -355,6 +354,8 @@ class User(VkontaktePKModel):
     # TODO: migrate all counter fields to *_count = models.PositiveIntegerField(u'Фотоальбомов', null=True)
     counters = ['albums', 'audios', 'followers', 'friends', 'mutual_friends',
                 'notes', 'subscriptions', 'user_photos', 'user_videos', 'videos']
+
+    sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
     counters_updated = models.DateTimeField(null=True, help_text=u'Счетчики были обновлены')
 
     sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
@@ -490,7 +491,7 @@ class User(VkontaktePKModel):
                     setattr(self, counter, response[0]['counters'][counter])
 
             self.sum_counters = sum([getattr(self, counter) for counter in self.counters])
-        self.counters_updated = datetime.now()
+        self.counters_updated = timezone.now()
         self.save()
 
     def set_name(self, name):

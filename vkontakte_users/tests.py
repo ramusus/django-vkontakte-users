@@ -2,6 +2,7 @@
 from datetime import datetime, timedelta
 
 from django.test import TestCase
+from django.utils import timezone
 import mock
 import simplejson as json
 from vkontakte_places.models import City, Country
@@ -124,9 +125,9 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1500)
 
         # make all users fresh
-        User.objects.all().update(fetched=datetime.now())
+        User.objects.all().update(fetched=timezone.now())
         # make 500 of them expired
-        User.objects.filter(remote_id__lt=500).update(fetched=datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
+        User.objects.filter(remote_id__lt=500).update(fetched=timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
 
         users_new = User.remote.fetch(ids=range(100, 2200), only_expired=True)
 
