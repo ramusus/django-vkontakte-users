@@ -8,9 +8,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction
 from django.utils.encoding import python_2_unicode_compatible
 from vkontakte_api import fields
+from vkontakte_api.api import api_call, VkontakteError
 from vkontakte_api.decorators import fetch_all
 from vkontakte_api.models import VkontakteManager, VkontaktePKModel
-from vkontakte_api.utils import api_call, VkontakteError
 from vkontakte_places.models import City, Country
 
 log = logging.getLogger('vkontakte_users')
