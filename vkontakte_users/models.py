@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta, datetime
+from datetime import timedelta, date
 import logging
 
 from dateutil import parser
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction
+from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from vkontakte_api import fields
 from vkontakte_api.api import api_call, VkontakteError
@@ -408,7 +409,7 @@ class User(VkontaktePKModel):
     @property
     def age(self):
         try:
-            return int((datetime.today() - parser.parse(self.bdate)).days / 365.25)
+            return int((date.today() - parser.parse(self.bdate)).days / 365.25)
         except:
             pass
 
