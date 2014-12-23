@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-from django.db import models, transaction
-from django.core.exceptions import ImproperlyConfigured
+from datetime import timedelta, datetime
+import logging
+
+from dateutil import parser
 from django.conf import settings
-from datetime import datetime
-from vkontakte_api.utils import api_call, VkontakteError
+from django.core.exceptions import ImproperlyConfigured
+from django.db import models, transaction
+from django.utils.encoding import python_2_unicode_compatible
 from vkontakte_api import fields
+from vkontakte_api.api import api_call, VkontakteError
 from vkontakte_api.decorators import fetch_all
 from vkontakte_api.models import VkontakteManager, VkontaktePKModel
 from vkontakte_places.models import City, Country
-from dateutil import parser
-from datetime import timedelta, datetime
-import logging
 
 log = logging.getLogger('vkontakte_users')
 
 USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
 
 USER_FIELDS = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,movies,tv,books,games,about,connections,universities,schools'
-USER_SEX_CHOICES = ((1, u'жен.'),(2, u'муж.'))
+USER_SEX_CHOICES = ((1, u'жен.'), (2, u'муж.'))
 USER_RELATION_CHOICES = (
     (1, u'Не женат / замужем'),
     (2, u'Есть друг / подруга'),
@@ -31,22 +32,27 @@ USER_RELATION_CHOICES = (
 USER_PHOTO_DEACTIVATED_URL = 'http://vk.com/images/deactivated_'
 USER_NO_PHOTO_URL = 'http://vkontakte.ru/images/camera_'
 
+
 def list_chunks_iterator(l, n):
     """ Yield successive n-sized chunks from l.
     """
     for i in xrange(0, len(l), n):
-        yield l[i:i+n]
+        yield l[i:i + n]
+
 
 class ParseUsersMixin(object):
+
     '''
     Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
     '''
+
     def parse_response_users(self, response_list):
-        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': datetime.now()})
+        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': timezone.now()})
         instances = []
         for instance in users:
             instances += [User.remote.get_or_create_from_instance(instance)]
         return instances
+
 
 class UsersManager(models.Manager):
 
@@ -62,9 +68,22 @@ class UsersManager(models.Manager):
     def without_avatar(self):
         return self.filter(has_avatar=False)
 
+
 class UsersRemoteManager(VkontakteManager):
 
     fetch_users_limit = 1000
+
+    @transaction.commit_on_success
+    def fetch_friends(self, user, only_existing_users=False, **kwargs):
+
+        # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
+        if only_existing_users:
+            kwargs = {'fields': '', 'extra_fields': {'only_ids': True}}
+
+        if 'fields' not in kwargs:
+            kwargs['fields'] = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'
+
+        return self.fetch(method='friends', uid=user.remote_id, **kwargs)
 
     @transaction.commit_on_success
     def fetch(self, **kwargs):
@@ -74,8 +93,9 @@ class UsersRemoteManager(VkontakteManager):
         '''
         if 'only_expired' in kwargs and kwargs.pop('only_expired'):
             ids = kwargs['ids']
-            expired_at = datetime.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
-            ids_non_expired = self.model.objects.filter(fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
+            expired_at = timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
+            ids_non_expired = self.model.objects.filter(
+                fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
             kwargs['ids'] = list(set(ids).difference(set(ids_non_expired)))
             users = None
             if len(kwargs['ids']):
@@ -138,9 +158,9 @@ class UsersRemoteManager(VkontakteManager):
             return super(UsersRemoteManager, self).parse_response_list(response_list, extra_fields)
 
 #    def get_or_create_from_instance(self, instance):
-#        #DatabaseError: invalid byte sequence for encoding "UTF8": 0xeda0bc
-#        #HINT:  This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by "client_encoding".
-#        # u.activity = u'\u041d\u0430\u0448 \u043e\u0431\u0443\u0447\u0430\u044e\u0449\u0438\u0439 \u043a\u0443\u0440\u0441 &quot;\u041a\u0430\u043a \u0438\u0437\u0431\u0430\u0432\u0438\u0442\u044c\u0441\u044f \u043e\u0442 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442-\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438&quot; - \u0442\u0435\u043f\u0435\u0440\u044c \u0438 \u0432 \u043e\u043d\u043b\u0430\u0439\u043d \u0432\u0430\u0440\u0438\u0430\u043d\u0442\u0435\ud83c\u2708\ud83d\U0001f4a8'
+# DatabaseError: invalid byte sequence for encoding "UTF8": 0xeda0bc
+# HINT:  This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by "client_encoding".
+# u.activity = u'\u041d\u0430\u0448 \u043e\u0431\u0443\u0447\u0430\u044e\u0449\u0438\u0439 \u043a\u0443\u0440\u0441 &quot;\u041a\u0430\u043a \u0438\u0437\u0431\u0430\u0432\u0438\u0442\u044c\u0441\u044f \u043e\u0442 \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442-\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438&quot; - \u0442\u0435\u043f\u0435\u0440\u044c \u0438 \u0432 \u043e\u043d\u043b\u0430\u0439\u043d \u0432\u0430\u0440\u0438\u0430\u043d\u0442\u0435\ud83c\u2708\ud83d\U0001f4a8'
 #        if instance.remote_id != 59930666:
 #            try:
 #                super(UsersRemoteManager, self).get_or_create_from_instance(instance)
@@ -218,13 +238,17 @@ class UsersRemoteManager(VkontakteManager):
 
     @transaction.commit_on_success
     def fetch_instance_likes(self, instance, *args, **kwargs):
-
+        '''
+        Deprecated. will be removed in next release, after updating vkontakte_photos app
+        '''
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         m2m_model = getattr(instance, m2m_field_name).through
         try:
-            rel_field_name = [field.name for field in m2m_model._meta.local_fields if field.name not in ['id','user']][0]
+            rel_field_name = [
+                field.name for field in m2m_model._meta.local_fields if field.name not in ['id', 'user']][0]
         except IndexError:
-            raise ImproperlyConfigured("Impossible to find name of relation attribute for instance %s in m2m like users table" % instance)
+            raise ImproperlyConfigured(
+                "Impossible to find name of relation attribute for instance %s in m2m like users table" % instance)
 
         ids = self.fetch_likes_user_ids(*args, **kwargs)
         if not ids:
@@ -241,7 +265,8 @@ class UsersRemoteManager(VkontakteManager):
         # delete left
         m2m_model.objects.filter(**{'user_id__in': ids_left, rel_field_name: instance}).delete()
         # make entered
-        m2m_model.objects.bulk_create([m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in ids_entered])
+        m2m_model.objects.bulk_create(
+            [m2m_model(**{'user_id': user_pk, rel_field_name: instance}) for user_pk in ids_entered])
 
         return users
 
@@ -250,27 +275,26 @@ class UserRelative(models.Model):
 
     TYPE_CHOICES = (
         ('grandchild', u'внук/внучка'),
-        ('grandparent',u'дедушка/бабушка'),
+        ('grandparent', u'дедушка/бабушка'),
         ('child', u'сын/дочка'),
-        ('sibling',u'брат/сестра'),
-        ('parent',u'мама/папа'),
+        ('sibling', u'брат/сестра'),
+        ('parent', u'мама/папа'),
     )
 
     user1 = models.ForeignKey('User', related_name='user_relatives1')
     user2 = models.ForeignKey('User', related_name='user_relatives2')
     type = models.CharField(u'Тип родственной связи', max_length=20, choices=TYPE_CHOICES)
 
+
+@python_2_unicode_compatible
 class User(VkontaktePKModel):
+
     '''
     Model of vkontakte user
     TODO: implement relatives, schools and universities connections
     TODO: make field screen_name unique
     '''
-    class Meta:
-        verbose_name = u'Пользователь Вконтакте'
-        verbose_name_plural = u'Пользователи Вконтакте'
-
-    resolve_screen_name_type = 'user'
+    resolve_screen_name_types = ['user']
     remote_pk_field = 'uid'
     slug_prefix = 'id'
 
@@ -299,7 +323,7 @@ class User(VkontaktePKModel):
     home_phone = models.CharField(max_length=50)
     mobile_phone = models.CharField(max_length=50)
 
-    photo_fields = ['photo','photo_big','photo_medium','photo_medium_rec','photo_rec']
+    photo_fields = ['photo', 'photo_big', 'photo_medium', 'photo_medium_rec', 'photo_rec']
     photo = models.URLField()
     photo_big = models.URLField()
     photo_medium = models.URLField()
@@ -327,10 +351,14 @@ class User(VkontaktePKModel):
 #    relatives = models.ManyToManyField('User', through=UserRelative)
 
     # counters
-    counters = ['albums','audios','followers','friends','mutual_friends','notes','subscriptions','user_photos','user_videos','videos']
+    # TODO: migrate all counter fields to *_count = models.PositiveIntegerField(u'Фотоальбомов', null=True)
+    counters = ['albums', 'audios', 'followers', 'friends', 'mutual_friends',
+                'notes', 'subscriptions', 'user_photos', 'user_videos', 'videos']
+
     sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
     counters_updated = models.DateTimeField(null=True, help_text=u'Счетчики были обновлены')
 
+    sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
     albums = models.PositiveIntegerField(u'Фотоальбомов', default=0)
     videos = models.PositiveIntegerField(u'Видеозаписей', default=0)
     audios = models.PositiveIntegerField(u'Аудиозаписей', default=0)
@@ -352,17 +380,17 @@ class User(VkontaktePKModel):
         'friends': 'friends.get',
     })
 
-    @property
-    def age(self):
-        try:
-            return int((datetime.today() - parser.parse(self.bdate)).days / 365.25)
-        except:
-            pass
+    class Meta:
+        verbose_name = u'Пользователь Вконтакте'
+        verbose_name_plural = u'Пользователи Вконтакте'
+
+    def __str__(self):
+        return self.first_name + ' ' + self.last_name
 
     def save(self, *args, **kwargs):
         # check strings for good encoding
         # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
-        for field in ['activity','games','movies','tv','books','about','interests','mobile_phone','home_phone','faculty_name','university_name']:
+        for field in ['activity', 'games', 'movies', 'tv', 'books', 'about', 'interests', 'mobile_phone', 'home_phone', 'faculty_name', 'university_name']:
             try:
                 getattr(self, field).encode('utf-16').decode('utf-16')
             except UnicodeDecodeError:
@@ -376,6 +404,13 @@ class User(VkontaktePKModel):
         except Exception, e:
             log.error("Error while saving user ID=%s with fields %s" % (self.remote_id, self.__dict__))
             raise e
+
+    @property
+    def age(self):
+        try:
+            return int((datetime.today() - parser.parse(self.bdate)).days / 365.25)
+        except:
+            pass
 
     def _substitute(self, old_instance):
         '''
@@ -401,7 +436,8 @@ class User(VkontaktePKModel):
             if self.pk:
                 for relative in relatives:
                     try:
-                        user_relative = UserRelative(type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.uid))
+                        user_relative = UserRelative(
+                            type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.uid))
                         user_relative.save()
                         self.relative.add(user_relative)
                     except User.DoesNotExist:
@@ -443,7 +479,8 @@ class User(VkontaktePKModel):
         try:
             response = api_call('users.get', uids=self.remote_id, fields='counters')
         except VkontakteError, e:
-            log.warning("There is vkontakte error [code=%d] while updating user [id=%d] counters: %s" % (e.code, self.remote_id, e.description))
+            log.warning("There is vkontakte error [code=%d] while updating user [id=%d] counters: %s" % (
+                e.code, self.remote_id, e.description))
             return False
 
         if 'counters' not in response[0]:
@@ -454,11 +491,8 @@ class User(VkontaktePKModel):
                     setattr(self, counter, response[0]['counters'][counter])
 
             self.sum_counters = sum([getattr(self, counter) for counter in self.counters])
-        self.counters_updated = datetime.now()
+        self.counters_updated = timezone.now()
         self.save()
-
-    def __unicode__(self):
-        return self.first_name + ' ' + self.last_name
 
     def set_name(self, name):
         name_parts = name.split()
@@ -474,15 +508,13 @@ class User(VkontaktePKModel):
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
     @transaction.commit_on_success
-    def fetch_friends(self, only_existing_users=False, **kwargs):
+    def fetch_friends(self, **kwargs):
         log.debug("Start updating friends of user %s" % self)
         if self.is_deactivated:
             return False
 
-        # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
-        kwargs = {'fields': '', 'extra_fields': {'only_ids': True}} if only_existing_users else {'fields': 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'}
         try:
-            users = User.remote.fetch(method='friends', uid=self.remote_id, **kwargs)
+            users = User.remote.fetch_friends(user=self, **kwargs)
             log.debug("Found %d friends of user %s" % (len(users), self))
         except VkontakteError, e:
             if e.code == 15:
