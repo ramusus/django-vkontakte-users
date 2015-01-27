@@ -240,7 +240,7 @@ class UsersRemoteManager(VkontakteManager):
     @transaction.commit_on_success
     def fetch_instance_likes(self, instance, *args, **kwargs):
         '''
-        Deprecated. will be removed in next release, after updating vkontakte_photos app
+        DEPRECATED. will be removed in next release, after updating vkontakte_photos app
         '''
         m2m_field_name = kwargs.pop('m2m_field_name', 'like_users')
         m2m_model = getattr(instance, m2m_field_name).through
