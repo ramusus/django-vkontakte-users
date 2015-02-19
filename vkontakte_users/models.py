@@ -8,7 +8,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
-from vkontakte_api import fields
 from vkontakte_api.api import api_call, VkontakteError
 from vkontakte_api.decorators import fetch_all
 from vkontakte_api.models import VkontakteManager, VkontaktePKModel
@@ -97,6 +96,7 @@ class UsersRemoteManager(VkontakteManager):
             expired_at = timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS)
             ids_non_expired = self.model.objects.filter(
                 fetched__gte=expired_at, remote_id__in=ids).values_list('remote_id', flat=True)
+
             kwargs['ids'] = list(set(ids).difference(set(ids_non_expired)))
             users = None
             if len(kwargs['ids']):
@@ -408,10 +408,11 @@ class User(VkontaktePKModel):
 
     @property
     def age(self):
-        try:
-            return int((date.today() - parser.parse(self.bdate)).days / 365.25)
-        except:
-            pass
+        if len(self.bdate.split('.')) == 3:
+            try:
+                return int((date.today() - parser.parse(self.bdate).date()).days / 365.25)
+            except ValueError:
+                pass
 
     def _substitute(self, old_instance):
         '''
