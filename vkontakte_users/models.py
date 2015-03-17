@@ -526,16 +526,17 @@ class User(VkontaktePKModel):
             else:
                 raise e
 
+        log.debug("Clear friends of user %s" % (self))
         self.friends_users.clear()
-        log.debug("Cleared friends of user %s" % (self))
 
-        for user in users:
-            self.friends_users.add(user)
-        log.debug("New friends to user %s attached" % (self))
+        log.debug("Attach new friends to user %s" % (self))
+        m2m = self.friends_users.through
+        m2m.objects.bulk_create([m2m(from_user_id=self.pk, to_user_id=user_id)
+                                 for user_id in users.values_list('pk', flat=True)])
 
+        log.debug("Update friends count %s of user %s" % (self.friends_count, self))
         self.friends_count = self.friends_users.count()
         self.save()
-        log.debug("Friends count %s of user %s updated" % (self.friends_count, self))
 
         return self.friends_users.all()
 
