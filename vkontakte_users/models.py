@@ -516,8 +516,8 @@ class User(VkontaktePKModel):
             return False
 
         try:
+            log.debug("Fetch friends for user %s" % self)
             users = User.remote.fetch_friends(user=self, **kwargs)
-            log.debug("Found %d friends of user %s" % (len(users), self))
         except VkontakteError, e:
             if e.code == 15:
                 # update current user, make him deactivated
@@ -535,7 +535,7 @@ class User(VkontaktePKModel):
                                  for user_id in users.values_list('pk', flat=True)])
 
         log.debug("Update friends count of user %s" % self)
-        self.friends_count = m2m.objects.count()
+        self.friends_count = self.friends_users.count()
         self.save()
 
         return self.friends_users.all()

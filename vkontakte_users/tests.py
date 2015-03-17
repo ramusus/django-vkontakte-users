@@ -59,6 +59,7 @@ class VkontakteUsersTest(TestCase):
         self.assertGreater(User.objects.count(), 100)
         self.assertEqual(users.count(), User.objects.count() - 1)
         self.assertEqual(user.friends_users.count(), User.objects.count() - 1)
+        self.assertEqual(user.friends_users.count(), user.friends_count)
 
         User.objects.filter(pk__gt=100).delete()
 
@@ -69,6 +70,7 @@ class VkontakteUsersTest(TestCase):
 
         self.assertEqual(users.count(), users_existed.count())
         self.assertEqual(users.count(), user.friends_users.count())
+        self.assertEqual(users.count(), user.friends_count)
 
     def test_fetch_user(self):
 
