@@ -534,8 +534,8 @@ class User(VkontaktePKModel):
         m2m.objects.bulk_create([m2m(from_user_id=self.pk, to_user_id=user_id)
                                  for user_id in users.values_list('pk', flat=True)])
 
-        log.debug("Update friends count %s of user %s" % self)
-        self.friends_count = self.friends_users.count()
+        log.debug("Update friends count of user %s" % self)
+        self.friends_count = m2m.objects.count()
         self.save()
 
         return self.friends_users.all()
