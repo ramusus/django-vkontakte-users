@@ -303,15 +303,15 @@ class User(VkontaktePKModel):
     last_name = models.CharField(max_length=200)
     screen_name = models.CharField(max_length=100, db_index=True)
 
-    sex = models.IntegerField(null=True, choices=USER_SEX_CHOICES)
+    sex = models.IntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
     bdate = models.CharField(max_length=100)
     timezone = models.IntegerField(null=True)
     city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
     country = models.ForeignKey(Country, null=True, on_delete=models.SET_NULL)
-    rate = models.PositiveIntegerField(null=True)
+    rate = models.PositiveIntegerField(null=True, db_index=True)
 
     activity = models.TextField()
-    relation = models.SmallIntegerField(null=True, choices=USER_RELATION_CHOICES)
+    relation = models.SmallIntegerField(null=True, choices=USER_RELATION_CHOICES, db_index=True)
     wall_comments = models.NullBooleanField()
 
     graduation = models.PositiveIntegerField(u'Дата окончания вуза', null=True)
@@ -320,7 +320,7 @@ class User(VkontaktePKModel):
     faculty = models.PositiveIntegerField(null=True)
     faculty_name = models.CharField(max_length=500)
 
-    has_mobile = models.NullBooleanField()
+    has_mobile = models.NullBooleanField(db_index=True)
     home_phone = models.CharField(max_length=50)
     mobile_phone = models.CharField(max_length=50)
 
@@ -356,15 +356,15 @@ class User(VkontaktePKModel):
     counters = ['albums', 'audios', 'followers', 'friends', 'mutual_friends',
                 'notes', 'subscriptions', 'user_photos', 'user_videos', 'videos']
 
-    sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
-    counters_updated = models.DateTimeField(null=True, help_text=u'Счетчики были обновлены')
+    sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков', db_index=True)
+    counters_updated = models.DateTimeField(null=True, help_text=u'Счетчики были обновлены', db_index=True)
 
     sum_counters = models.PositiveIntegerField(default=0, help_text=u'Сумма всех счетчиков')
     albums = models.PositiveIntegerField(u'Фотоальбомов', default=0)
     videos = models.PositiveIntegerField(u'Видеозаписей', default=0)
     audios = models.PositiveIntegerField(u'Аудиозаписей', default=0)
     followers = models.PositiveIntegerField(u'Подписчиков', default=0)
-    friends = models.PositiveIntegerField(u'Друзей', default=0)
+    friends = models.PositiveIntegerField(u'Друзей', default=0, db_index=True)
     mutual_friends = models.PositiveIntegerField(u'Общих друзей', default=0)
     notes = models.PositiveIntegerField(u'Заметок', default=0)
     subscriptions = models.PositiveIntegerField(u'Подписок (только пользователи)', default=0)
