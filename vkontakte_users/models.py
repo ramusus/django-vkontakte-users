@@ -303,12 +303,13 @@ class User(VkontaktePKModel):
     last_name = models.CharField(max_length=200)
     screen_name = models.CharField(max_length=100, db_index=True)
 
-    sex = models.IntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
-    bdate = models.CharField(max_length=100)
-    timezone = models.IntegerField(null=True)
+    sex = models.PositiveSmallIntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
+    age = models.PositiveSmallIntegerField(null=True, db_index=True)
+    timezone = models.PositiveSmallIntegerField(null=True)
     city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
     country = models.ForeignKey(Country, null=True, on_delete=models.SET_NULL)
     rate = models.PositiveIntegerField(null=True, db_index=True)
+    bdate = models.CharField(max_length=100)
 
     activity = models.TextField()
     relation = models.SmallIntegerField(null=True, choices=USER_RELATION_CHOICES, db_index=True)
@@ -400,17 +401,18 @@ class User(VkontaktePKModel):
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
             self.relation = None
 
+        self.update_age()
+
         try:
             return super(User, self).save(*args, **kwargs)
         except Exception, e:
             log.error("Error while saving user ID=%s with fields %s" % (self.remote_id, self.__dict__))
             raise e
 
-    @property
-    def age(self):
+    def update_age(self):
         if len(self.bdate.split('.')) == 3:
             try:
-                return int((date.today() - parser.parse(self.bdate).date()).days / 365.25)
+                self.age = int((date.today() - parser.parse(self.bdate).date()).days / 365.25)
             except ValueError:
                 pass
 
