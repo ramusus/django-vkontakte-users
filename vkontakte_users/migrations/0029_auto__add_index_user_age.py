@@ -110,7 +110,7 @@ class Migration(SchemaMigration):
             'skype': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'subscriptions': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'sum_counters': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'timezone': ('django.db.models.fields.PositiveSmallIntegerField', [], {'null': 'True'}),
+            'timezone': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
             'tv': ('django.db.models.fields.TextField', [], {}),
             'twitter': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'university': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True'}),
