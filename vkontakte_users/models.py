@@ -18,7 +18,7 @@ log = logging.getLogger('vkontakte_users')
 USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
 
 USER_FIELDS = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,movies,tv,books,games,about,connections,universities,schools'
-USER_SEX_CHOICES = ((1, u'жен.'), (2, u'муж.'))
+USER_SEX_CHOICES = ((0, u'не ук.'), (1, u'жен.'), (2, u'муж.'))
 USER_RELATION_CHOICES = (
     (1, u'Не женат / замужем'),
     (2, u'Есть друг / подруга'),
@@ -303,7 +303,7 @@ class User(VkontaktePKModel):
     last_name = models.CharField(max_length=200)
     screen_name = models.CharField(max_length=100, db_index=True)
 
-    sex = models.IntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
+    sex = models.PositiveSmallIntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
     age = models.PositiveSmallIntegerField(null=True, db_index=True)
     timezone = models.IntegerField(null=True)
     city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
@@ -402,12 +402,17 @@ class User(VkontaktePKModel):
             self.relation = None
 
         self.update_age()
+        self.check_sex()
 
         try:
             return super(User, self).save(*args, **kwargs)
         except Exception, e:
             log.error("Error while saving user ID=%s with fields %s" % (self.remote_id, self.__dict__))
             raise e
+
+    def check_sex(self):
+        if self.sex not in [pair[0] for pair in USER_SEX_CHOICES]:
+            self.sex = None
 
     def update_age(self):
         if len(self.bdate.split('.')) == 3:
