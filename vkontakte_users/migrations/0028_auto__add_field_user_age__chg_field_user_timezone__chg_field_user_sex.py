@@ -14,22 +14,11 @@ class Migration(SchemaMigration):
                       keep_default=False)
 
 
-        # Changing field 'User.timezone'
-        db.alter_column(u'vkontakte_users_user', 'timezone', self.gf('django.db.models.fields.IntegerField')(null=True))
-
-        # Changing field 'User.sex'
-        db.alter_column(u'vkontakte_users_user', 'sex', self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True))
 
     def backwards(self, orm):
         # Deleting field 'User.age'
         db.delete_column(u'vkontakte_users_user', 'age')
 
-
-        # Changing field 'User.timezone'
-        db.alter_column(u'vkontakte_users_user', 'timezone', self.gf('django.db.models.fields.IntegerField')(null=True))
-
-        # Changing field 'User.sex'
-        db.alter_column(u'vkontakte_users_user', 'sex', self.gf('django.db.models.fields.IntegerField')(null=True))
 
     models = {
         u'contenttypes.contenttype': {
@@ -120,7 +109,7 @@ class Migration(SchemaMigration):
             'relation': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'db_index': 'True'}),
             'remote_id': ('django.db.models.fields.BigIntegerField', [], {'primary_key': 'True'}),
             'screen_name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'sex': ('django.db.models.fields.PositiveSmallIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'sex': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'db_index': 'True'}),
             'skype': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'subscriptions': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'sum_counters': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),

@@ -106,7 +106,7 @@ class Migration(SchemaMigration):
             'relation': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True', 'db_index': 'True'}),
             'remote_id': ('django.db.models.fields.BigIntegerField', [], {'primary_key': 'True'}),
             'screen_name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'db_index': 'True'}),
-            'sex': ('django.db.models.fields.PositiveSmallIntegerField', [], {'null': 'True', 'db_index': 'True'}),
+            'sex': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'db_index': 'True'}),
             'skype': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'subscriptions': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'sum_counters': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),

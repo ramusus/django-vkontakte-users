@@ -303,7 +303,7 @@ class User(VkontaktePKModel):
     last_name = models.CharField(max_length=200)
     screen_name = models.CharField(max_length=100, db_index=True)
 
-    sex = models.PositiveSmallIntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
+    sex = models.IntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
     age = models.PositiveSmallIntegerField(null=True, db_index=True)
     timezone = models.IntegerField(null=True)
     city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
