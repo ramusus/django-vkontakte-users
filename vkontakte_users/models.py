@@ -305,7 +305,7 @@ class User(VkontaktePKModel):
 
     sex = models.PositiveSmallIntegerField(null=True, choices=USER_SEX_CHOICES, db_index=True)
     age = models.PositiveSmallIntegerField(null=True, db_index=True)
-    timezone = models.PositiveSmallIntegerField(null=True)
+    timezone = models.SmallIntegerField(null=True)
     city = models.ForeignKey(City, null=True, on_delete=models.SET_NULL)
     country = models.ForeignKey(Country, null=True, on_delete=models.SET_NULL)
     rate = models.PositiveIntegerField(null=True, db_index=True)

@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
 
 
         # Changing field 'User.timezone'
-        db.alter_column(u'vkontakte_users_user', 'timezone', self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True))
+        db.alter_column(u'vkontakte_users_user', 'timezone', self.gf('django.db.models.fields.SmallIntegerField')(null=True))
 
         # Changing field 'User.sex'
         db.alter_column(u'vkontakte_users_user', 'sex', self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True))
@@ -124,7 +124,7 @@ class Migration(SchemaMigration):
             'skype': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'subscriptions': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'sum_counters': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            'timezone': ('django.db.models.fields.PositiveSmallIntegerField', [], {'null': 'True'}),
+            'timezone': ('django.db.models.fields.SmallIntegerField', [], {'null': 'True'}),
             'tv': ('django.db.models.fields.TextField', [], {}),
             'twitter': ('django.db.models.fields.CharField', [], {'max_length': '500'}),
             'university': ('django.db.models.fields.PositiveIntegerField', [], {'null': 'True'}),
