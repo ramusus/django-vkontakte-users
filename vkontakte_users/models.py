@@ -5,11 +5,11 @@ import logging
 from dateutil import parser
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import models, transaction
+from django.db import models
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 from vkontakte_api.api import api_call, VkontakteError
-from vkontakte_api.decorators import fetch_all
+from vkontakte_api.decorators import fetch_all, atomic
 from vkontakte_api.models import VkontakteManager, VkontaktePKModel
 from vkontakte_places.models import City, Country
 
@@ -73,7 +73,7 @@ class UsersRemoteManager(VkontakteManager):
 
     fetch_users_limit = 1000
 
-    @transaction.commit_on_success
+    @atomic
     def fetch_friends(self, user, only_existing_users=False, **kwargs):
 
         # send extra_fields with only_ids key for special mode of parsing response, used only in vkontakte_users.models
@@ -85,7 +85,7 @@ class UsersRemoteManager(VkontakteManager):
 
         return self.fetch(method='friends', uid=user.remote_id, **kwargs)
 
-    @transaction.commit_on_success
+    @atomic
     def fetch(self, **kwargs):
         '''
         Additional attributes:
@@ -237,7 +237,7 @@ class UsersRemoteManager(VkontakteManager):
         response = api_call('likes.getList', **kwargs)
         return response['users']
 
-    @transaction.commit_on_success
+    @atomic
     def fetch_instance_likes(self, instance, *args, **kwargs):
         '''
         DEPRECATED. will be removed in next release, after updating vkontakte_photos app
@@ -520,7 +520,7 @@ class User(VkontaktePKModel):
         from vkontakte_wall.models import Post
         return Post.remote.fetch_wall(owner=self, *args, **kwargs)
 
-    @transaction.commit_on_success
+    @atomic
     def fetch_friends(self, **kwargs):
         log.debug("Start updating friends of user %s" % self)
         if self.is_deactivated:
