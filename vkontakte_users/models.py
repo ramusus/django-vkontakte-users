@@ -427,9 +427,12 @@ class User(VkontaktePKModel):
     def update_age(self):
         if len(self.bdate.split('.')) == 3:
             try:
-                self.age = int((date.today() - parser.parse(self.bdate).date()).days / 365.25)
-            except ValueError:
-                pass
+                born = parser.parse(self.bdate).date()
+            except:
+                return
+            # Using solution from here http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
+            today = date.today()
+            self.age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
 
     def update_deactivated_status(self):
         self.is_deactivated = False
