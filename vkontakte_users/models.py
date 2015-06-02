@@ -401,8 +401,7 @@ class User(VkontaktePKModel):
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
             self.relation = None
 
-        self.update_age()
-        self.check_sex()
+        self.update()
 
         try:
             return super(User, self).save(*args, **kwargs)
@@ -410,9 +409,20 @@ class User(VkontaktePKModel):
             log.error("Error while saving user ID=%s with fields %s" % (self.remote_id, self.__dict__))
             raise e
 
+    def update(self):
+        self.update_age()
+        self.update_deactivated_status()
+        self.update_avatar_presence()
+        self.check_sex()
+        self.check_graduation()
+
     def check_sex(self):
         if self.sex not in [pair[0] for pair in USER_SEX_CHOICES]:
             self.sex = None
+
+    def check_graduation(self):
+        if self.graduation == 0:
+            self.graduation = None
 
     def update_age(self):
         if len(self.bdate.split('.')) == 3:
@@ -420,6 +430,20 @@ class User(VkontaktePKModel):
                 self.age = int((date.today() - parser.parse(self.bdate).date()).days / 365.25)
             except ValueError:
                 pass
+
+    def update_deactivated_status(self):
+        self.is_deactivated = False
+        for field_name in self.photo_fields:
+            if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
+                self.is_deactivated = True
+                return
+
+    def update_avatar_presence(self):
+        self.has_avatar = True
+        for field_name in self.photo_fields:
+            if USER_NO_PHOTO_URL in getattr(self, field_name):
+                self.has_avatar = False
+                return
 
     def _substitute(self, old_instance):
         '''
@@ -454,32 +478,9 @@ class User(VkontaktePKModel):
 
         super(User, self).parse(response)
 
-        self.parse_deactivated_status()
-        self.parse_avatar_presence()
-
-#        if 'uid' in response:
-#            self.remote_id = response['uid']
-
-        if self.graduation == 0:
-            self.graduation = None
-
     @property
     def refresh_kwargs(self):
         return {'ids': [self.remote_id]}
-
-    def parse_deactivated_status(self):
-        self.is_deactivated = False
-        for field_name in self.photo_fields:
-            if USER_PHOTO_DEACTIVATED_URL in getattr(self, field_name):
-                self.is_deactivated = True
-                return
-
-    def parse_avatar_presence(self):
-        self.has_avatar = True
-        for field_name in self.photo_fields:
-            if USER_NO_PHOTO_URL in getattr(self, field_name):
-                self.has_avatar = False
-                return
 
     def update_counters(self):
         '''
