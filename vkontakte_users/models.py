@@ -424,9 +424,10 @@ class User(VkontaktePKModel):
             self.graduation = None
 
     def update_age(self):
-        parts = map(int, self.bdate.split('.'))
+        parts = self.bdate.split('.')
         if len(parts) == 3:
             try:
+                parts = map(int, parts)
                 born = date(parts[2], parts[1], parts[0])
             except:
                 return
