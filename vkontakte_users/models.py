@@ -429,7 +429,7 @@ class User(VkontaktePKModel):
             try:
                 parts = map(int, parts)
                 born = date(parts[2], parts[1], parts[0])
-            except:
+            except ValueError:
                 return
             # Using solution from here http://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
             today = date.today()
