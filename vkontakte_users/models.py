@@ -327,8 +327,8 @@ class User(VkontaktePKModel):
     about = models.TextField()
 
     # education
-    universities = JSONField()
-    schools = JSONField()
+    universities = JSONField(blank=True)
+    schools = JSONField(blank=True)
 
     friends_users = models.ManyToManyField('User', related_name='followers_users')
     friends_count = models.PositiveIntegerField(u'Друзей', default=0)
@@ -377,17 +377,18 @@ class User(VkontaktePKModel):
 
         # cut all CharFields to max allowed length
         for field in self._meta.local_fields:
-            value = getattr(self, field.name)
-            if isinstance(field, (models.CharField, models.TextField)) and isinstance(value, six.string_types):
-                # check strings for bad symbols in string encoding
-                # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
-                try:
-                    value.encode('utf-16').decode('utf-16')
-                except UnicodeDecodeError:
-                    value = ''
-            if isinstance(field, models.CharField) and value:
-                value = value[:field.max_length]
-            setattr(self, field.name, value)
+            if isinstance(field, (models.CharField, models.TextField)):
+                value = getattr(self, field.name)
+                if isinstance(value, six.string_types):
+                    # check strings for bad symbols in string encoding
+                    # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
+                    try:
+                        value.encode('utf-16').decode('utf-16')
+                    except UnicodeDecodeError:
+                        value = ''
+                if isinstance(field, models.CharField) and value:
+                    value = value[:field.max_length]
+                setattr(self, field.name, value)
 
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
             self.relation = None
