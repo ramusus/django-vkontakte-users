@@ -11,8 +11,7 @@ import simplejson as json
 from .factories import UserFactory
 from .models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL, USERS_INFO_TIMEOUT_DAYS
 
-# TODO: change to offline token
-TOKEN = '9c32a6fa42cedbf05a4efc12cc20b30f42398037fdfe79487b394d5e5c2fc39edbb52a6ae6ce02b16edf6'
+TOKEN = '33af136bd445c28075f429fdb2fb9387db8fdd2d2d118c1653a4d6507f76460fce35a08b94e745eac1807'
 
 USER_ID = 1
 USER_SCREEN_NAME = 'durov'
