@@ -5,11 +5,12 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
-from django.utils import timezone
+from django.utils import timezone, six
 from django.utils.encoding import python_2_unicode_compatible
 from vkontakte_api.api import api_call, VkontakteError
 from vkontakte_api.decorators import fetch_all, atomic
 from vkontakte_api.models import VkontakteManager, VkontaktePKModel
+from vkontakte_api.fields import JSONField
 from vkontakte_places.models import City, Country
 
 log = logging.getLogger('vkontakte_users')
@@ -326,13 +327,13 @@ class User(VkontaktePKModel):
     about = models.TextField()
 
     # education
-    universities = models.TextField()
-    schools = models.TextField()
+    universities = JSONField()
+    schools = JSONField()
 
     friends_users = models.ManyToManyField('User', related_name='followers_users')
     friends_count = models.PositiveIntegerField(u'Друзей', default=0)
 
-#    relatives = models.ManyToManyField('User', through=UserRelative)
+    # relatives = models.ManyToManyField('User', through=UserRelative)
 
     # counters
     # TODO: migrate all counter fields to *_count = models.PositiveIntegerField(u'Фотоальбомов', null=True)
@@ -376,16 +377,17 @@ class User(VkontaktePKModel):
 
         # cut all CharFields to max allowed length
         for field in self._meta.local_fields:
-            if isinstance(field, models.CharField):
-                setattr(self, field.name, getattr(self, field.name)[:field.max_length])
-
-            if isinstance(field, (models.CharField, models.TextField)):
-                # check strings for good encoding
+            value = getattr(self, field.name)
+            if isinstance(field, (models.CharField, models.TextField)) and isinstance(value, six.string_types):
+                # check strings for bad symbols in string encoding
                 # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
                 try:
-                    getattr(self, field.name).encode('utf-16').decode('utf-16')
+                    value.encode('utf-16').decode('utf-16')
                 except UnicodeDecodeError:
-                    setattr(self, field.name, '')
+                    value = ''
+            if isinstance(field, models.CharField) and value:
+                value = value[:field.max_length]
+            setattr(self, field.name, value)
 
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
             self.relation = None

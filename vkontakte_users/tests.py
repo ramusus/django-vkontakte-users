@@ -85,9 +85,9 @@ class VkontakteUsersTest(TestCase):
         self.assertEqual(instance.first_name, u'Павел')
         self.assertEqual(instance.last_name, u'Дуров')
         self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
-#        self.assertEqual(instance.twitter, u'durov')
-#        self.assertEqual(instance.livejournal, u'durov')
-#        self.assertEqual(instance.relation, 1)
+        # self.assertEqual(instance.twitter, u'durov')
+        # self.assertEqual(instance.livejournal, u'durov')
+        # self.assertEqual(instance.relation, 1)
         self.assertEqual(instance.wall_comments, False)
 
         # test counters
