@@ -329,8 +329,8 @@ class User(VkontaktePKModel):
     about = models.TextField()
 
     # education
-    universities = JSONField(blank=True)
-    schools = JSONField(blank=True)
+    universities = JSONField(blank=True, null=True)
+    schools = JSONField(blank=True, null=True)
 
     friends_users = models.ManyToManyField('User', related_name='followers_users')
     friends_count = models.PositiveIntegerField(u'Друзей', default=0)
