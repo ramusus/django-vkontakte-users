@@ -463,14 +463,15 @@ class User(VkontaktePKModel):
 
         if 'city' in response:
             city = response.pop('city')
+
             if isinstance(city, dict): # api version >= 5.23
-                self.city = City.objects.get_or_create(remote_id=city['id'], name=city['title'])[0]
+                self.city = City.objects.get_or_create(remote_id=city['id'], defaults={'name':city['title']})[0]
             else:
                 self.city = City.objects.get_or_create(remote_id=city)[0]
         if 'country' in response:
             country = response.pop('country')
             if isinstance(country, dict): # api version >= 5.23
-                self.country = Country.objects.get_or_create(remote_id=country['id'], name=country['title'])[0]
+                self.country = Country.objects.get_or_create(remote_id=country['id'], defaults={'name':country['title']})[0]
             else:
                 self.country = Country.objects.get_or_create(remote_id=country)[0]
         if 'relatives' in response:
