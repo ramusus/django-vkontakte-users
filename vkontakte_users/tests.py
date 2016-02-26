@@ -103,7 +103,7 @@ class VkontakteUsersTest(TestCase):
         with override_api_context('vkontakte', token=TOKEN):
             instance.update_counters()
         self.assertGreater(instance.followers, 0)
-        self.assertGreater(instance.notes, 0)
+        # self.assertGreater(instance.notes, 0)
         self.assertGreater(instance.sum_counters, 0)
         self.assertNotEqual(instance.counters_updated, None)
 
@@ -118,6 +118,18 @@ class VkontakteUsersTest(TestCase):
         self.assertGreater(instance.sum_counters, 0)
         self.assertGreater(instance.followers, 0)
         self.assertNotEqual(instance.counters_updated, None)
+
+        # fetch another time
+        with override_api_context('vkontakte', token=TOKEN):
+            users = User.remote.fetch(ids=[205387401])
+        self.assertEqual(User.objects.count(), 3)
+
+        instance = users[0]
+
+        # test for keeping old counters
+        self.assertIsInstance(instance.city, City)
+        self.assertEqual(instance.city.remote_id, 5331)
+        self.assertEqual(instance.city.name, 'Los Angeles')
 
     @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=user_fetch_mock)
     def test_fetch_users_more_than_1000(self, fetch):
@@ -173,7 +185,7 @@ class VkontakteUsersTest(TestCase):
                   "screen_name": "id51443905",
                   "sex": 1,
                   "timezone": 3,
-                  "uid": 51443905,
+                  "id": 51443905,
                   "university": "0",
                   "university_name": ""}
             ]}

@@ -17,7 +17,7 @@ log = logging.getLogger('vkontakte_users')
 
 USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
 
-USER_FIELDS = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,' \
+USER_FIELDS = 'id,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,' \
               'photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,' \
               'movies,tv,books,games,about,connections,universities,schools'
 USER_SEX_CHOICES = ((0, u'не ук.'), (1, u'жен.'), (2, u'муж.'))
@@ -46,7 +46,6 @@ class ParseUsersMixin(object):
     """
     Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
     """
-
     def parse_response_users(self, response_list, items_field='profiles'):
         users = User.remote.parse_response_list(response_list.get(items_field, []), {'fetched': timezone.now()})
 
@@ -83,9 +82,9 @@ class UsersRemoteManager(VkontakteManager, ParseUsersMixin):
             kwargs = {'fields': '', 'extra_fields': {'only_ids': True}}
 
         if 'fields' not in kwargs:
-            kwargs['fields'] = 'uid,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'
+            kwargs['fields'] = 'id,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo'
 
-        return self.fetch(method='friends', uid=user.remote_id, **kwargs)
+        return self.fetch(method='friends', user_id=user.remote_id, **kwargs)
 
     @atomic
     def fetch(self, **kwargs):
@@ -141,7 +140,7 @@ class UsersRemoteManager(VkontakteManager, ParseUsersMixin):
         if 'fields' not in kwargs:
             kwargs['fields'] = USER_FIELDS
         if 'ids' in kwargs:
-            kwargs['uids'] = ','.join(map(lambda i: str(i), kwargs.pop('ids')))
+            kwargs['user_ids'] = ','.join(map(str, kwargs.pop('ids')))
 
         return super(UsersRemoteManager, self).api_call(method, **kwargs)
 
@@ -271,11 +270,9 @@ class UserRelative(models.Model):
 class User(VkontaktePKModel):
     """
     Model of vkontakte user
-    TODO: implement relatives, schools and universities connections
-    TODO: make field screen_name unique
+    TODO: implement relatives
     """
     resolve_screen_name_types = ['user']
-    remote_pk_field = 'uid'
     slug_prefix = 'id'
 
     first_name = models.CharField(max_length=32)
@@ -363,7 +360,7 @@ class User(VkontaktePKModel):
     is_banned = models.BooleanField(u'Забанен', default=False)
 
     objects = UsersManager()
-    remote = UsersRemoteManager(remote_pk=('remote_id',), methods={
+    remote = UsersRemoteManager(remote_pk=('remote_id',), version=5.8, methods={
         'get': 'users.get',
         'friends': 'friends.get',
     })
@@ -465,13 +462,13 @@ class User(VkontaktePKModel):
             city = response.pop('city')
 
             if isinstance(city, dict): # api version >= 5.23
-                self.city = City.objects.get_or_create(remote_id=city['id'], defaults={'name':city['title']})[0]
+                self.city = City.objects.get_or_create(remote_id=city['id'], defaults={'name': city['title']})[0]
             else:
                 self.city = City.objects.get_or_create(remote_id=city)[0]
         if 'country' in response:
             country = response.pop('country')
             if isinstance(country, dict): # api version >= 5.23
-                self.country = Country.objects.get_or_create(remote_id=country['id'], defaults={'name':country['title']})[0]
+                self.country = Country.objects.get_or_create(remote_id=country['id'], defaults={'name': country['title']})[0]
             else:
                 self.country = Country.objects.get_or_create(remote_id=country)[0]
         if 'relatives' in response:
@@ -481,7 +478,7 @@ class User(VkontaktePKModel):
                 for relative in relatives:
                     try:
                         user_relative = UserRelative(
-                            type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.uid))
+                            type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.id))
                         user_relative.save()
                         self.relative.add(user_relative)
                     except User.DoesNotExist:
@@ -505,9 +502,8 @@ class User(VkontaktePKModel):
         """
         Update counters for user with special query and calculate sum of them
         """
-
         try:
-            response = api_call('users.get', uids=self.remote_id, fields='counters')
+            response = api_call('users.get', ids=self.remote_id, fields='counters')
         except VkontakteError, e:
             log.warning("There is vkontakte error [code=%d] while updating user [id=%d] counters: %s" % (
                 e.code, self.remote_id, e.description))
@@ -549,7 +545,7 @@ class User(VkontaktePKModel):
         except VkontakteError, e:
             if e.code == 15:
                 # update current user, make him deactivated
-                User.remote.fetch(uid=self.remote_id)
+                User.remote.fetch(id=self.remote_id)
                 return False
             else:
                 raise e
