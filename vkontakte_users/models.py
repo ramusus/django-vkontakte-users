@@ -46,8 +46,10 @@ class ParseUsersMixin(object):
     """
     Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
     """
-    def parse_response_users(self, response_list):
-        users = User.remote.parse_response_list(response_list.get('profiles', []), {'fetched': timezone.now()})
+
+    def parse_response_users(self, response_list, items_field='profiles'):
+        users = User.remote.parse_response_list(response_list.get(items_field, []), {'fetched': timezone.now()})
+
         instances = []
         for instance in users:
             instances += [User.remote.get_or_create_from_instance(instance)]
@@ -69,7 +71,7 @@ class UsersManager(models.Manager):
         return self.filter(has_avatar=False)
 
 
-class UsersRemoteManager(VkontakteManager):
+class UsersRemoteManager(VkontakteManager, ParseUsersMixin):
 
     fetch_users_limit = 1000
 
@@ -327,8 +329,8 @@ class User(VkontaktePKModel):
     about = models.TextField()
 
     # education
-    universities = JSONField(blank=True)
-    schools = JSONField(blank=True)
+    universities = JSONField(blank=True, null=True)
+    schools = JSONField(blank=True, null=True)
 
     friends_users = models.ManyToManyField('User', related_name='followers_users')
     friends_count = models.PositiveIntegerField(u'Друзей', default=0)
@@ -456,10 +458,22 @@ class User(VkontaktePKModel):
         super(User, self)._substitute(old_instance)
 
     def parse(self, response):
+        if 'id' in response: # api version >= 5.23
+            self.remote_id = response['id']
+
         if 'city' in response:
-            self.city = City.objects.get_or_create(remote_id=response.pop('city'))[0]
+            city = response.pop('city')
+
+            if isinstance(city, dict): # api version >= 5.23
+                self.city = City.objects.get_or_create(remote_id=city['id'], defaults={'name':city['title']})[0]
+            else:
+                self.city = City.objects.get_or_create(remote_id=city)[0]
         if 'country' in response:
-            self.country = Country.objects.get_or_create(remote_id=response.pop('country'))[0]
+            country = response.pop('country')
+            if isinstance(country, dict): # api version >= 5.23
+                self.country = Country.objects.get_or_create(remote_id=country['id'], defaults={'name':country['title']})[0]
+            else:
+                self.country = Country.objects.get_or_create(remote_id=country)[0]
         if 'relatives' in response:
             relatives = response.pop('relatives')
             # doesn't work becouse of self.pk will be set lately
@@ -491,6 +505,7 @@ class User(VkontaktePKModel):
         """
         Update counters for user with special query and calculate sum of them
         """
+
         try:
             response = api_call('users.get', uids=self.remote_id, fields='counters')
         except VkontakteError, e:
