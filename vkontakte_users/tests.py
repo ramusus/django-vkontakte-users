@@ -1,43 +1,38 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
 
-from django.test import TestCase
 from django.utils import timezone
 from vkontakte_places.models import City, Country
-from social_api.api import override_api_context
+from vkontakte_api.tests import VkontakteApiTestCase
 import mock
 import simplejson as json
 
 from .factories import UserFactory
 from .models import User, USER_PHOTO_DEACTIVATED_URL, USER_NO_PHOTO_URL, USERS_INFO_TIMEOUT_DAYS
 
-TOKEN = '33af136bd445c28075f429fdb2fb9387db8fdd2d2d118c1653a4d6507f76460fce35a08b94e745eac1807'
-
 USER_ID = 1
 USER_SCREEN_NAME = 'durov'
 
 
 def user_fetch_mock(ids, **kwargs):
-    users = [User.objects.get(remote_id=id) if User.objects.filter(
-        remote_id=id).count() == 1 else UserFactory(remote_id=id) for id in ids]
+    users = [User.objects.get(remote_id=i) if User.objects.filter(
+        remote_id=i).count() == 1 else UserFactory(remote_id=i) for i in ids]
     ids = [user.pk for user in users]
     return User.objects.filter(pk__in=ids)
 
 
-class VkontakteUsersTest(TestCase):
+class VkontakteUsersTest(VkontakteApiTestCase):
 
     def test_refresh_user(self):
 
-        with override_api_context('vkontakte', token=TOKEN):
-            instance = User.remote.fetch(ids=[USER_ID])[0]
+        instance = User.remote.fetch(ids=[USER_ID])[0]
         self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
 
         instance.screen_name = 'temp'
         instance.save()
         self.assertEqual(instance.screen_name, 'temp')
 
-        with override_api_context('vkontakte', token=TOKEN):
-            instance.refresh()
+        instance.refresh()
         self.assertEqual(instance.screen_name, USER_SCREEN_NAME)
 
 #    def test_fetch_user_relatives(self):
@@ -56,12 +51,10 @@ class VkontakteUsersTest(TestCase):
     def test_fetch_user_friends(self):
 
         self.assertEqual(User.objects.count(), 0)
-        with override_api_context('vkontakte', token=TOKEN):
-            user = User.remote.fetch(ids=[6])[0]
+        user = User.remote.fetch(ids=[6])[0]
         self.assertEqual(User.objects.count(), 1)
 
-        with override_api_context('vkontakte', token=TOKEN):
-            users = user.fetch_friends()
+        users = user.fetch_friends()
 
         self.assertGreater(User.objects.count(), 100)
         self.assertEqual(users.count(), User.objects.count() - 1)
@@ -73,8 +66,7 @@ class VkontakteUsersTest(TestCase):
         self.assertGreater(user.friends_users.count(), 10)
         self.assertLess(user.friends_users.count(), 20)
 
-        with override_api_context('vkontakte', token=TOKEN):
-            users_existed = user.fetch_friends(only_existing_users=True)
+        users_existed = user.fetch_friends(only_existing_users=True)
 
         self.assertEqual(users.count(), users_existed.count())
         self.assertEqual(users.count(), user.friends_users.count())
@@ -83,8 +75,7 @@ class VkontakteUsersTest(TestCase):
     def test_fetch_user(self):
 
         self.assertEqual(User.objects.count(), 0)
-        with override_api_context('vkontakte', token=TOKEN):
-            users = User.remote.fetch(ids=[1, 2])
+        users = User.remote.fetch(ids=[1, 2])
         self.assertEqual(len(users), 2)
         self.assertEqual(User.objects.count(), 2)
 
@@ -100,16 +91,14 @@ class VkontakteUsersTest(TestCase):
         # self.assertEqual(instance.wall_comments, False)
 
         # test counters
-        with override_api_context('vkontakte', token=TOKEN):
-            instance.update_counters()
+        instance.update_counters()
         self.assertGreater(instance.followers, 0)
         # self.assertGreater(instance.notes, 0)
         self.assertGreater(instance.sum_counters, 0)
         self.assertNotEqual(instance.counters_updated, None)
 
         # fetch another time
-        with override_api_context('vkontakte', token=TOKEN):
-            users = User.remote.fetch(ids=[1, 2])
+        users = User.remote.fetch(ids=[1, 2])
         self.assertEqual(User.objects.count(), 2)
 
         instance = users[0]
@@ -120,8 +109,7 @@ class VkontakteUsersTest(TestCase):
         self.assertNotEqual(instance.counters_updated, None)
 
         # fetch another time
-        with override_api_context('vkontakte', token=TOKEN):
-            users = User.remote.fetch(ids=[205387401])
+        users = User.remote.fetch(ids=[205387401])
         self.assertEqual(User.objects.count(), 3)
 
         instance = users[0]
@@ -233,6 +221,5 @@ class VkontakteUsersTest(TestCase):
         User.objects.create(remote_id=174221855, screen_name='mikhailserzhantov', sex=0)
         User.objects.create(remote_id=182224356, screen_name='mikhailserzhantov', sex=0)
 
-        with override_api_context('vkontakte', token=TOKEN):
-            self.assertEqual(User.remote.get_by_slug('mikhailserzhantov').remote_id, 182224356)
+        self.assertEqual(User.remote.get_by_slug('mikhailserzhantov').remote_id, 182224356)
 #        self.assertEqual(User.objects.deactivated().count(), 2) deactivated users were deleted completely
