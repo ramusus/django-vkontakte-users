@@ -134,8 +134,7 @@ class VkontakteUsersTest(TestCase):
     @mock.patch('vkontakte_api.models.VkontakteManager.fetch', side_effect=user_fetch_mock)
     def test_fetch_users_more_than_1000(self, fetch):
 
-        with override_api_context('vkontakte', token=TOKEN):
-            users = User.remote.fetch(ids=range(0, 1500))
+        users = User.remote.fetch(ids=range(0, 1500))
         self.assertEqual(len(users), 1500)
         self.assertEqual(User.objects.count(), 1500)
 
@@ -145,8 +144,7 @@ class VkontakteUsersTest(TestCase):
     @mock.patch('vkontakte_users.models.User.remote._fetch', side_effect=user_fetch_mock)
     def test_fetching_expired_users(self, fetch):
 
-        with override_api_context('vkontakte', token=TOKEN):
-            users = User.remote.fetch(ids=range(0, 1500))
+        users = User.remote.fetch(ids=range(0, 1500))
 
         self.assertEqual(users.count(), 1500)
         self.assertEqual(len(fetch.mock_calls[0].call_list()[0][2]['ids']), 1500)
@@ -156,8 +154,7 @@ class VkontakteUsersTest(TestCase):
         # make 500 of them expired
         User.objects.filter(remote_id__lt=500).update(fetched=timezone.now() - timedelta(USERS_INFO_TIMEOUT_DAYS + 1))
 
-        with override_api_context('vkontakte', token=TOKEN):
-            users_new = User.remote.fetch(ids=range(100, 2200), only_expired=True)
+        users_new = User.remote.fetch(ids=range(100, 2200), only_expired=True)
 
         self.assertEqual(users_new.count(), 2100)
         # (500 - 100) + (2200 - 1500), expired + new

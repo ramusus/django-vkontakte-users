@@ -15,7 +15,7 @@ from vkontakte_places.models import City, Country
 
 log = logging.getLogger('vkontakte_users')
 
-USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 0)
+USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS', 14)
 
 USER_FIELDS = 'id,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,' \
               'photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,' \

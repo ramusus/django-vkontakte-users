@@ -107,13 +107,14 @@ class QuickDjangoTest(object):
         Fire up the Django test suite from before version 1.2
         """
         test_settings = self.custom_settings
-        installed_apps = test_settings.pop('INSTALLED_APPS', [])
-        settings.configure(DEBUG=True,
-                           DATABASE_ENGINE='sqlite3',
-                           DATABASE_NAME=os.path.join(self.DIRNAME, 'database.db'),
-                           INSTALLED_APPS=self.INSTALLED_APPS + installed_apps + self.apps,
-                           **test_settings
-                           )
+        installed_apps = test_settings.pop('INSTALLED_APPS', ())
+        settings.configure(
+                DEBUG=True,
+                DATABASE_ENGINE='sqlite3',
+                DATABASE_NAME=os.path.join(self.DIRNAME, 'database.db'),
+                INSTALLED_APPS=tuple(self.INSTALLED_APPS + installed_apps + self.apps),
+                **test_settings
+        )
         from django.test.simple import run_tests
         failures = run_tests(self.apps, verbosity=1)
         if failures:
@@ -124,14 +125,13 @@ class QuickDjangoTest(object):
         Fire up the Django test suite developed for version 1.2 and up
         """
         test_settings = self.custom_settings
-        installed_apps = test_settings.pop('INSTALLED_APPS', [])
+        installed_apps = test_settings.pop('INSTALLED_APPS', ())
         settings.configure(
             DEBUG=True,
             DATABASES=self.get_database(1.2),
-            INSTALLED_APPS=self.INSTALLED_APPS + installed_apps + self.apps,
+            INSTALLED_APPS=tuple(self.INSTALLED_APPS + installed_apps + self.apps),
             **test_settings
         )
-
         from django.test.simple import DjangoTestSuiteRunner
         failures = DjangoTestSuiteRunner().run_tests(self.apps, verbosity=1)
         if failures:
@@ -142,16 +142,15 @@ class QuickDjangoTest(object):
         Fire up the Django test suite developed for version 1.7 and up
         """
         test_settings = self.custom_settings
-        installed_apps = test_settings.pop('INSTALLED_APPS', [])
+        installed_apps = test_settings.pop('INSTALLED_APPS', ())
         settings.configure(
             DEBUG=True,
             DATABASES=self.get_database(1.7),
             MIDDLEWARE_CLASSES=('django.middleware.common.CommonMiddleware',
                                 'django.middleware.csrf.CsrfViewMiddleware'),
-            INSTALLED_APPS=self.INSTALLED_APPS + installed_apps + self.apps,
+            INSTALLED_APPS=tuple(self.INSTALLED_APPS + installed_apps + self.apps),
             **test_settings
         )
-
         from django.test.simple import DjangoTestSuiteRunner
         import django
         django.setup()
@@ -164,13 +163,13 @@ class QuickDjangoTest(object):
         Fire up the Django test suite developed for version 1.8 and up
         """
         test_settings = self.custom_settings
-        installed_apps = test_settings.pop('INSTALLED_APPS', [])
+        installed_apps = test_settings.pop('INSTALLED_APPS', ())
         settings.configure(
             DEBUG=True,
             DATABASES=self.get_database(1.8),
             MIDDLEWARE_CLASSES=('django.middleware.common.CommonMiddleware',
                                 'django.middleware.csrf.CsrfViewMiddleware'),
-            INSTALLED_APPS=self.INSTALLED_APPS + installed_apps + self.apps,
+            INSTALLED_APPS=tuple(self.INSTALLED_APPS + installed_apps + self.apps),
             **test_settings
         )
         from django.test.runner import DiscoverRunner
