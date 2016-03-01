@@ -474,15 +474,15 @@ class User(VkontaktePKModel):
         if 'relatives' in response:
             relatives = response.pop('relatives')
             # doesn't work becouse of self.pk will be set lately
-            if self.pk:
-                for relative in relatives:
-                    try:
-                        user_relative = UserRelative(
-                            type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.id))
-                        user_relative.save()
-                        self.relative.add(user_relative)
-                    except User.DoesNotExist:
-                        continue
+            # if self.pk:
+            #     for relative in relatives:
+            #         try:
+            #             user_relative = UserRelative(
+            #                 type=relative.type, user1=self, user2=User.objects.get(remote_id=relative.id))
+            #             user_relative.save()
+            #             self.relative.add(user_relative)
+            #         except User.DoesNotExist:
+            #             continue
         if 'deactivated' in response:
             response['is_deactivated'] = True
             response['is_deleted'] = response['deactivated'] == 'deleted'
