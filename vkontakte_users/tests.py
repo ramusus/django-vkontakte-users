@@ -72,6 +72,13 @@ class VkontakteUsersTest(VkontakteApiTestCase):
         self.assertEqual(users.count(), user.friends_users.count())
         self.assertEqual(users.count(), user.friends_count)
 
+    def test_fetch_users_with_long_skype(self):
+
+        users = User.remote.fetch(ids=[345927420, 63994079, 51045846, 315266694, 346875355])
+        self.assertEqual(len(users), 5)
+        for user in users:
+            self.assertEqual(len(user.skype), 32)
+
     def test_fetch_user(self):
 
         self.assertEqual(User.objects.count(), 0)
