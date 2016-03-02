@@ -46,8 +46,9 @@ class ParseUsersMixin(object):
     """
     Manager mixin for parsing response with extra cache 'profiles'. Used in vkontakte_wall,vkontakte_board applications
     """
-    def parse_response_users(self, response_list, items_field='profiles'):
-        users = User.remote.parse_response_list(response_list.get(items_field, []), {'fetched': timezone.now()})
+    def parse_response_users(self, response, items_field='profiles'):
+        # TODO: refactor to parsing only
+        users = User.remote.parse_response_list(response.get(items_field, []), {'fetched': timezone.now()})
 
         instances = []
         for instance in users:
