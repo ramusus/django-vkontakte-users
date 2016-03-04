@@ -505,7 +505,7 @@ class User(VkontaktePKModel):
         """
         try:
             response = api_call('users.get', ids=self.remote_id, fields='counters')
-        except VkontakteError, e:
+        except VkontakteError as e:
             log.warning("There is vkontakte error [code=%d] while updating user [id=%d] counters: %s" % (
                 e.code, self.remote_id, e.description))
             return False
@@ -543,7 +543,7 @@ class User(VkontaktePKModel):
         try:
             log.debug("Fetch friends for user %s" % self)
             users = User.remote.fetch_friends(user=self, **kwargs)
-        except VkontakteError, e:
+        except VkontakteError as e:
             if e.code == 15:
                 # update current user, make him deactivated
                 User.remote.fetch(id=self.remote_id)
