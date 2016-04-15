@@ -172,50 +172,31 @@ class UsersRemoteManager(VkontakteManager, ParseUsersMixin):
         if likes_type is None:
             raise ImproperlyConfigured("'likes_type' attribute should be specified")
 
-        # type
-        # тип Like-объекта. Подробнее о типах объектов можно узнать на странице Список типов Like-объектов.
         kwargs['type'] = likes_type
-        # owner_id
-        # идентификатор владельца Like-объекта (id пользователя или id приложения). Если параметр type равен sitepage,
-        # то в качестве owner_id необходимо передавать id приложения. Если параметр не задан, то считается, что он
-        # равен либо идентификатору текущего пользователя, либо идентификатору текущего приложения (если type равен
-        # sitepage).
         kwargs['owner_id'] = owner_id
-        # item_id
-        # идентификатор Like-объекта. Если type равен sitepage, то параметр item_id может содержать значение параметра
-        # page_id, используемый при инициализации виджета «Мне нравится».
         kwargs['item_id'] = item_id
-        # page_url
-        # url страницы, на которой установлен виджет «Мне нравится». Используется вместо параметра item_id.
-
-        # filter
-        # указывает, следует ли вернуть всех пользователей, добавивших объект в список "Мне нравится" или только тех,
-        # которые рассказали о нем друзьям. Параметр может принимать следующие значения:
-        # likes – возвращать всех пользователей
-        # copies – возвращать только пользователей, рассказавших об объекте друзьям
-        # По умолчанию возвращаются все пользователи.
         kwargs['filter'] = filter
-        # friends_only
-        # указывает, необходимо ли возвращать только пользователей, которые являются друзьями текущего пользователя.
-        # Параметр может принимать следующие значения:
-        # 0 – возвращать всех пользователей в порядке убывания времени добавления объекта
-        # 1 – возвращать только друзей текущего пользователя в порядке убывания времени добавления объекта
-        # Если метод был вызван без авторизации или параметр не был задан, то считается, что он равен 0.
         kwargs['friends_only'] = 0
-        # offset
-        # смещение, относительно начала списка, для выборки определенного подмножества. Если параметр не задан, то
-        # считается, что он равен 0.
         kwargs['offset'] = int(offset)
-        # count
-        # количество возвращаемых идентификаторов пользователей.
-        # Если параметр не задан, то считается, что он равен 100, если не задан параметр friends_only, в противном
-        # случае 10. Максимальное значение параметра 1000, если не задан параметр friends_only, в противном случае 100.
         kwargs['count'] = int(count)
 
         log.debug('Fetching like users ids of %s %s_%s, offset %d' % (likes_type, owner_id, item_id, offset))
 
         response = api_call('likes.getList', **kwargs)
         return response['users']
+
+    def get_group_members_online_count(self, group, *args, **kwargs):
+        if 'vkontakte_groups' not in settings.INSTALLED_APPS:
+            raise ImproperlyConfigured("Application '%s' not in INSTALLED_APPS" % 'vkontakte_groups')
+
+        from vkontakte_groups.models import Group
+        if not isinstance(group, Group):
+            raise ValueError("Argument 'group' should be instance of Group")
+
+        kwargs['group_id'] = group.remote_id
+        kwargs['online'] = 1
+        response = api_call('users.search', **kwargs)
+        return response[0]
 
     @atomic
     def fetch_instance_likes(self, instance, *args, **kwargs):
@@ -293,7 +274,7 @@ class User(VkontaktePKModel):
     relation = models.SmallIntegerField(null=True, choices=USER_RELATION_CHOICES, db_index=True)
     wall_comments = models.NullBooleanField()
 
-    graduation = models.PositiveIntegerField(u'Дата окончания вуза', null=True)
+    graduation = models.PositiveIntegerField(u'Дата окончания ВУЗа', null=True)
     university = models.PositiveIntegerField(null=True)
     faculty = models.PositiveIntegerField(null=True)
     university_name = models.CharField(max_length=255)

@@ -230,3 +230,11 @@ class VkontakteUsersTest(VkontakteApiTestCase):
 
         self.assertEqual(User.remote.get_by_slug('mikhailserzhantov').remote_id, 182224356)
 #        self.assertEqual(User.objects.deactivated().count(), 2) deactivated users were deleted completely
+
+    def test_members_online_count(self):
+        from vkontakte_wall.factories import GroupFactory
+        from vkontakte_wall.tests import GROUP_ID
+        group = GroupFactory(remote_id=GROUP_ID)
+        users_count = User.remote.get_group_members_online_count(group)
+
+        self.assertGreater(users_count, 0)
