@@ -355,20 +355,28 @@ class User(VkontaktePKModel):
         return self.first_name + ' ' + self.last_name
 
     def save(self, *args, **kwargs):
-
         # cut all CharFields to max allowed length
+        cut = False
         for field in self._meta.local_fields:
             if isinstance(field, (models.CharField, models.TextField)):
                 value = getattr(self, field.name)
+                if isinstance(field, models.CharField) and value:
+                    if len(value) > field.max_length:
+                        value = value[:field.max_length]
+                        cut = True
                 if isinstance(value, six.string_types):
                     # check strings for bad symbols in string encoding
                     # there is problems to save users with bad encoded activity strings like ID=88798245, ID=143523733
-                    try:
-                        value.encode('utf-16').decode('utf-16')
-                    except UnicodeDecodeError:
-                        value = ''
-                if isinstance(field, models.CharField) and value:
-                    value = value[:field.max_length]
+                    while True:
+                        try:
+                            value.encode('utf-16').decode('utf-16')
+                            break
+                        except UnicodeDecodeError:
+                            if cut and len(value) > 2:
+                                value = value[:-1]
+                            else:
+                                value = ''
+                                break
                 setattr(self, field.name, value)
 
         if self.relation and self.relation not in dict(USER_RELATION_CHOICES).keys():
