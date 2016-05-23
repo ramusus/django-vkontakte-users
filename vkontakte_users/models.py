@@ -19,7 +19,7 @@ USERS_INFO_TIMEOUT_DAYS = getattr(settings, 'VKONTAKTE_USERS_INFO_TIMEOUT_DAYS',
 
 USER_FIELDS = 'id,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,' \
               'photo_big,has_mobile,rate,contacts,education,activity,relation,wall_comments,relatives,interests,' \
-              'movies,tv,books,games,about,connections,universities,schools'
+              'movies,tv,books,games,about,connections,universities,schools,followers_count'
 USER_SEX_CHOICES = ((0, u'не ук.'), (1, u'жен.'), (2, u'муж.'))
 USER_RELATION_CHOICES = (
     (1, u'Не женат / замужем'),
@@ -553,6 +553,13 @@ class User(VkontaktePKModel):
         self.save()
 
         return self.friends_users.all()
+
+    def fetch_friends_count(self, **kwargs):
+        response = User.remote.api_call(method='friends', user_id=self.remote_id, count=0, offset=1)
+        if 'count' in response:
+            self.friends_count = response['count']
+            self.save()
+        return self.friends_count
 
     def get_sex(self):
         return dict(USER_SEX_CHOICES).get(self.sex)
