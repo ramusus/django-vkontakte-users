@@ -357,7 +357,7 @@ class User(VkontaktePKModel):
     def save(self, *args, **kwargs):
         # cut all CharFields to max allowed length
         cut = False
-        for field in self._meta.local_fields:
+        for field in self._meta.fields:
             if isinstance(field, (models.CharField, models.TextField)):
                 value = getattr(self, field.name)
                 if isinstance(field, models.CharField) and value:
